@@ -51,8 +51,10 @@ pts(2,:) = pts(2,:)+0.35;
 pts = pts';
 
 %% draw model point cloud
-plot_pointcloud(pts,'.b')
-label_axis();
+if talk > 1
+    plot_pointcloud(pts,'.b')
+    label_axis();
+end
 
 %% generate point cloud
 [Xi,Yi] = meshgrid(linspace(xrange(1),xrange(2),cRes),linspace(yrange(1),yrange(2),rRes));
