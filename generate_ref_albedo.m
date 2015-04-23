@@ -2,6 +2,10 @@ function [ avg_albedo ] = generate_ref_albedo( face_database_path )
 %GENERATE_REF_ALBEDO Summary of this function goes here
 %   Detailed explanation goes here
 
+if face_database_path(end)~='\' || face_database_path(end)~='/'
+    face_database_path(end+1) = '\';
+end
+
 impaths = cell(1,0);
 for i=1:39
     if i<10
@@ -9,7 +13,7 @@ for i=1:39
     else
         no = num2str(i);
     end
-    impaths{i} = [face_database_path '/yaleB' no '/yaleB' no '_P00A+000E+00.pgm'];    
+    impaths{i} = [face_database_path 'yaleB' no '/yaleB' no '_P00A+000E+00.pgm'];    
 end
 
 landmarks = cell(1,numel(impaths));
