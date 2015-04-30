@@ -18,22 +18,19 @@ delete('.\data\temp.jpg')
 landmarks = reshape(str2num(output),2,77)-repmat([67;111],1,77);
 
 %% Compute pose
-pts = [33 43 53 63];
+pts = [33 43 53 63 75];
 landmarks = landmarks(:,pts);
-Rpose = compute_pose_YaleB(landmarks);
+talk = 0;
+[Rpose, Scale] = compute_pose_YaleB(landmarks, talk, im);
 
 %% generate ref depth map
 talk = 2;
 ply_path = '..\data\ref_model.ply';
-dmap_ref = generate_ref_depthmap(ply_path,talk,1000,700,Rpose);
+[dmap_ref, n_ref] = generate_ref_depthmap(ply_path,Scale, talk, size(im,1), size(im,2), Rpose,im);
 
 %% generate ref albedo
 face_database_path = '../CroppedYale';
-alb_ref = get_ref_albedo(face_database_path);
+talk = 0;
+alb_ref = get_ref_albedo(face_database_path, talk);
 
-figure;imshow(imread(impath));hold on
-
-
-plot(landmarks(1,:),landmarks(2,:),'o')
-figure;imshow(alb_ref);
 

@@ -1,4 +1,4 @@
-function [ sRT ] = compute_pose( pp,Pp )
+function [ sRT,S ] = compute_pose( pp,Pp )
 %COMPUTE_POSE Given point correspondences between 2D(p) and 3D(P), computes
 %rough pose of the 3D. Assumptions are orthographic projection.
 TP = eye(4);
