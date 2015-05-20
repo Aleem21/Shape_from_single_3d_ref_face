@@ -1,4 +1,4 @@
-function [ albedo ] = get_ref_albedo( face_database_path, landmarks,sz_im,fusion_path,talk )
+function [ albedo ] = get_ref_albedo_YaleB( face_database_path, landmarks,sz_im,fusion_path,talk )
 %GET_DEPTHMAP Checks if average albedo already exits. If it does, returns
 %in, else computes one, saves in and returns it
 if nargin<4
@@ -17,7 +17,7 @@ catch Err
         imwrite(albedo, [face_database_path 'avg_alb.tiff']);
     end
 end
-albedo = remap_albedo_YaleB( fusion_path, landmarks,albedo,sz_im );
+% albedo = remap_albedo_YaleB( fusion_path, landmarks,albedo,sz_im );
 albedo = albedo/max(albedo(:));
 if talk
     figure;imshow(albedo);

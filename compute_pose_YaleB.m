@@ -8,10 +8,13 @@ if nargin<2
     talk = 0;
 end
 
+pts = [33 43 53 63 75];
+pp = pp(:,pts);
+
 %% data conditioning
 % flipping of y axis to set +y on top and hence origin at bottom left
 % corner of image
-sz = 192;
+sz = size(im,1);
 pp(2,:) = sz -pp(2,:);
 
 %% 3D points for Our model
