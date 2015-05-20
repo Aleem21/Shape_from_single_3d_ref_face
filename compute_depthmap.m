@@ -24,8 +24,12 @@ ptsn(3,:) = -ptsn(3,:);
 tri = tri-1;
 
 %% apply the mex function
-depth = (mex_compute_depth(ptsn, tri, [-1 1],[-1 1],cRes, rRes)-0.5)*2;
-depth = 1-depth(:,end:-1:1)';
-depth(depth==0) = nan;
+depth  = (mex_compute_depth(ptsn, tri, xrange,yrange,cRes, rRes)-0.5)*2;
+depth = -depth(:,end:-1:1)';
+depth(depth==-1 | depth==1) = nan;
+% 
+% depth  = (mex_compute_depth_new(ptsn, tri, xrange,yrange,cRes, rRes)*2)-1;
+% depth = -depth(:,end:-1:1)';
+% depth(depth==1) = nan;
 end
 
