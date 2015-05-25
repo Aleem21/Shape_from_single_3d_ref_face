@@ -1,4 +1,4 @@
-function [ depth_map, n, N_ref,pts ] = generate_ref_depthmap( ply_path,Scale, talk,rRes,cRes,Rpose,im,xrange,yrange )
+function [ depth_map, n, N_ref,pts ] = generate_ref_depthmap( ply_path,Scale, talk,rRes,cRes,Rpose,im,center,xrange,yrange )
 %GENERATE_REF_DEPTHMAP generated depthmap from reading the ply file of the
 %model, resolution of rows and columns specified by inputs
 %
@@ -33,13 +33,21 @@ end
 if nargin < 5
     cRes = 200;
 end
-if nargin < 8
-    xrange = [-1 1];
+if nargin < 6
+    Rpose = eye(4);
+end
+if nargin < 7
+    im = [];
 end
 if nargin < 9
+    xrange = [-1 1];
+end
+if nargin < 10
     yrange = [-1 1];
 end
-
+if nargin <8
+    center = 1;
+end
 %% read model
 [tri,pts] = plyread(ply_path,'tri');
 
@@ -60,7 +68,7 @@ if talk > 2
 end
 
 %% generate depth map by calling mex file
-depth_map = compute_depthmap( pts, tri, xrange, yrange, cRes, rRes )*min(Scale);
+depth_map = compute_depthmap( pts, tri, xrange, yrange, cRes, rRes,center )*min(Scale);
 
 %% draw depth map
 if talk >0
@@ -79,9 +87,9 @@ end
 
 %% find normal
 % width of filter in x and y direction
-delta = [2 2];
-fx = [-1 0 1]';         %x is vertical, starting from top
-fy = [-1 0 1];          %y is horizontal, starting from left
+% delta = [2 2];
+% fx = [-1 0 1]';         %x is vertical, starting from top
+% fy = [-1 0 1];          %y is horizontal, starting from left
 
 delta = [1 1];
 fx = [-1 1]';
@@ -94,6 +102,15 @@ n(:,:,1) = N.*p;
 n(:,:,2) = N.*q;
 n(:,:,3) = N;
 N_ref = 1./N;
+
+
+depth_map(:,end) = NaN;
+depth_map(end,:) = NaN;
+n(end,:,:) = NaN;
+n(:,end,:) = NaN;
+N_ref(end,:) = NaN;
+N_ref(:,end) =NaN;
+
 if talk
     figure;
     subplot(3,3,[1,2, 4,5 , 7,8])

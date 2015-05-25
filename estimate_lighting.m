@@ -56,9 +56,9 @@ alb = alb(~isnan(nx))';
 
 bad = im<0.05 | im>0.95 | alb< 0.05;
 
-% im(bad) = [];
-% alb(bad) = [];
-% Y(:,bad) = [];
+im(bad) = [];
+alb(bad) = [];
+Y(:,bad) = [];
 %account for brdf
 rho = ones(size(im));
 radiosity = im./rho./alb;

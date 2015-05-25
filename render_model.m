@@ -1,12 +1,14 @@
-function [ c ] = render_model( ply_path, sh_coeff, talk,cRes, rRes )
+function [ c ] = render_model( ply_path, sh_coeff, talk,Rpose, cRes, rRes )
 %RENDER_MODEL Summary of this function goes here
 %   Detailed explanation goes here
 import plyread.plyread
-
 if nargin < 4
-    cRes = 400;
+    Rpose = eye(4);
 end
 if nargin < 5
+    cRes = 400;
+end
+if nargin < 6
     rRes = 400;
 end
 %% read model
@@ -16,7 +18,7 @@ end
 
 %pose correction
 pts = [pts ones(size(pts,1),1)]';
-Rpose = makehgtform('scale',0.005);
+% Rpose = makehgtform('scale',0.005);
 
 pts = Rpose * pts;
 pts = pts(1:3,:);
@@ -28,8 +30,10 @@ n = [-output.vertex.ny';output.vertex.nx';output.vertex.nz'];
 n = n./repmat(sum(n.^2).^0.5,3,1);
 % pre-mex conditioning 
 ptsn = pts;
-ptsn(1,:) = ptsn(1,:);
-ptsn(2,:) = ptsn(2,:);
+% ptsn(1,:) = (ptsn(1,:)/cRes-0.5)*2;
+% ptsn(2,:) = (ptsn(2,:)/rRes-0.5)*2;
+% ptsn(1,:) = ptsn(1,:);
+% ptsn(2,:) = ptsn(2,:);
 ptsn(3,:) = -ptsn(3,:);
 
 tri = tri-1;
