@@ -21,14 +21,15 @@ ncy = ncy(face_inds);
 I = im(face_inds);
 rho_ref = alb_ref(face_inds);
 N_ref = N_ref_in(face_inds);
-t1 = r_face+1;
-t3 = c_face+1;
+% t1 = r_face+1;
+% t3 = c_face+1;
 
 n_zs = numel(I);
 % A = zeros(n_zs, n_zs+1);
 tic
 n_boundary = sum(b_out(:));
-A = sparse(n_zs+n_boundary, n_zs);
+% A = sparse(n_zs+n_boundary, n_zs);
+A = sparse([],[],[],n_zs+n_boundary, n_zs,sum(in_face(:))*3 + sum(b_out(:))*4 + sum(in_face(:))*9);
 
 % t1inds = sub2ind_my([n_zs,n_zs+1], 1:n_zs, t1);
 % t3inds = sub2ind_my([n_zs,n_zs+1], 1:n_zs, t3);
@@ -36,7 +37,7 @@ A = sparse(n_zs+n_boundary, n_zs);
 % A(t1inds) = l1;
 % A(t3inds) = l2;
 counter = n_zs+1;
-f = figure;
+% f = figure;
 bad_boundary = [];
 [fr,fc] = meshgrid(1:size(face,1),1:size(face,2));
 inds = find_elements([r_face c_face],fr',fc');
@@ -88,23 +89,15 @@ for i=1:n_zs
         end
         counter = counter + 1;
     else
-        %if b_in(r_face(i),c_face(i))
-        %	neg = find_elements([r_face c_face],r_face(i)-1,c_face(i));
-        %	pos = find_elements([r_face c_face],r_face(i)+1,c_face(i));
-        %	A(counter,neg) = A(counter,neg)-ncx(i);
-        %	A(counter,pos) = A(counter,pos)+ncx(i);
-        %	neg = find_elements([r_face c_face],r_face(i)-1,c_face(i));
-        %	pos = find_elements([r_face c_face],r_face(i)+1,c_face(i));
-        %	A(counter,neg) = A(counter,neg)-ncy(i);
-        %	A(counter,pos) = A(counter,pos)+ncy(i);
-        %	counter = counter + 1;
-        %	% if its an inside the face pixel, use data term constraint
-        %end
-        A(i,i) = -l1 -l2;
-        
+        factor = alb_ref(r_face(i),c_face(i))/N_ref_in(r_face(i),c_face(i));
+%         const = alb_ref(r_face(i),c_face(i))*l0 - factor*l3;
+%         A(i,i) = (-l1 -l2)*factor;
+        elems = inds(sub2ind(size(face),[-1 0]+r_face(i),[0 -1]+c_face(i)));
+        A(i, elems ) = -factor*[l1 l2];
 %         elems = find_elements([r_face c_face],[1 0]+r_face(i),[0 1]+c_face(i));
         elems = inds(sub2ind(size(face),[1 0]+r_face(i),[0 1]+c_face(i)));
-        A(i, elems ) = [l1 l2];
+        A(i, elems ) = factor*[l1 l2];
+%         A(i,end) = const;
     end
 end
 catch err
@@ -112,21 +105,24 @@ catch err
 end
 
 % regularization term
+[r_inface,c_inface] = find(in_face);
+
+inface_inds = sub2ind(size(im),r_inface,c_inface);
+
 reg = 1;
 if (reg)
-[r_inface,c_inface] = find(in_face);
-inface_inds = sub2ind(size(im),r_inface,c_inface);
 n_in_zs = numel(inface_inds);
 sz = 3; dev = 2;
-gauss = fspecial('gaussian',sz,dev);
-% gauss = [-1 -1  -1; -1 8 -1; -1 -1 -1];
-rhs_reg = lambda1*(z_ref - conv2(z_ref,gauss,'same'));
-% rhs_reg = lambda1*(conv2(z_ref,gauss,'same'));
-rhs_reg = rhs_reg(inface_inds);
+% gauss = fspecial('gaussian',sz,dev);
+gauss = [-1 -1  -1; -1 8 -1; -1 -1 -1];
+% gauss = [0 -1  0; -1 4 0; 0 -1 0];
+% rhs_reg = lambda1*(z_ref - conv2(z_ref,gauss,'same'));
+rhs_reg_mat = lambda1*(conv2(z_ref,gauss,'same'));
+rhs_reg = rhs_reg_mat(inface_inds);
 [boxc, boxr] = meshgrid(-1:1,-1:1);
 
-gauss = -gauss;
-gauss(2,2) = 1+gauss(2,2);
+% gauss = -gauss;
+% gauss(2,2) = 1+gauss(2,2);
 gaussVec = lambda1*gauss(:);
 % gaussVec = -lambda1*gauss(:);
 try
@@ -147,9 +143,12 @@ end
 %     inds = find_elements([r_face c_face],[-1 -1 -1 0 0 0 1 1 1]+r_inface(i),[-1 0 1 -1 0 1 -1 0 1]+c_inface(i));
 % end
 toc
-rhs = (I./rho_ref - l0).*N_ref + l3;
+% rhs = (I./rho_ref - l0).*N_ref + l3;
+rhs = I - rho_ref*l0 - rho_ref./N_ref*l3;
 rhs(end+1:end+n_boundary) = 0;
-rhs = [rhs; rhs_reg];
+if reg
+    rhs = [rhs; rhs_reg];
+end
 % remove rows in A where data term was not computed. Also remove
 % corresponsing image observations (i.e. LHS of data term)
 bad_rows = isnan(A(:,1));
@@ -164,15 +163,22 @@ face_inds(bad_boundary) = [];
 
 
 z = A\rhs;
+% zend = z(end);
+% z = z(1:end-1)/z(end);
 depth = zeros(size(N_ref_in));
 depth(face_inds) = z;
-offset = depth(inface_inds(1)) - z_ref(inface_inds(1));
+offset = mean(depth(inface_inds)) - mean(z_ref(inface_inds));
 depth = depth-offset;
 depth(~face) = NaN;
-figure; surf(depth,'edgealpha',0);
+% figure; surf(depth,'edgealpha',0);
 z2 = z_ref(face_inds);
-err2 = abs(A*z2-rhs);
-err = abs(A*z-rhs);
+err_ref = abs(A*z2-rhs);
+err_est = abs(A*z-rhs);
 depth2 = depth;
-depth2(face_inds) = err(1:numel(face_inds));
-figure;imagesc(depth2)
+depth2(face_inds) = err_est(1:numel(face_inds));
+depth22 = depth;
+depth22(face_inds) = err_ref(1:numel(face_inds));
+% figure;plot(err_ref);title('error in ref depth')
+% figure;plot(err_est);title('error in computed depth')
+% figure;imagesc(depth);
+% figure;imagesc(depth2)

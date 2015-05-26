@@ -37,7 +37,7 @@ face_database_path = '../CroppedYale';
 talk = 0;
 alb_ref = get_ref_albedo_YaleB(face_database_path,landmarks,size(im) , fusion_path, talk);
 % alb_ref = ((get_ref_albedo(face_database_path,landmarks, size(im),fusion_path, talk)+0.5).^0.3-0.5);
-alb_ref = alb_ref*0+1;
+% alb_ref = alb_ref*0+1;
 %% estimate lighting
 talk = 0;
 l = estimate_lighting(n_ref, alb_ref, im,4);
