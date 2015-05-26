@@ -16,7 +16,8 @@ for i=1:n
     impath = [folder_path impaths{i}];
 %% make image
 [im,im_c] = read_image(impath);
-
+im = imresize(im,0.3);
+im_c = imresize(im_c,0.3);
 %% Run face tracker
 landmarks = stasm_tracker(im,talk);
 
@@ -40,15 +41,17 @@ alb_ref = get_ref_albedo(face_database_path,landmarks, size(im),fusion_path, tal
 
 % alb_ref = ((get_ref_albedo(face_database_path,landmarks, size(im),fusion_path, talk)+0.5).^0.3-0.5);
 % alb_ref = alb_ref*0+0.8;
-% alb_ref = dmap_ref*0+1;
+alb_ref = dmap_ref*0+1;
 % alb_ref = alb_ref*0+rand(size(alb_ref));
 
-%% estimate lighting
+%% estimate lighting+
+s = 150;
+Rpose = makehgtform('scale',1/s);
 l = estimate_lighting(n_ref, alb_ref, im,4,talk);
-c4 = render_model('./data/sphere.ply',l,talk,1000,1000);
+c4 = render_model('./data/sphere.ply',l,talk,Rpose,1000,1000);
 
 l2 = estimate_lighting(n_ref, alb_ref, im,9);
-c9 = render_model('./data/sphere.ply',l2,talk,1000,1000);
+c9 = render_model('./data/sphere.ply',l2,talk,Rpose,1000,1000);
 % 
 % l = zeros(9,1);
 % l(2) = 0.3;
@@ -68,6 +71,7 @@ imshow(c4)
 % subplot(3,n,count+2*n)
 % imshow(c9)
 drawnow
+% depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l,50);
 
 if mod(count,3)==0 && i<n
     f=figure;

@@ -35,15 +35,15 @@ ny = ny(:)';
 nz = n(:,:,3);
 nz = nz(:)';
 
-Y = [   c0*     ones(size(nx));
-        c1*     nx;
-        c1*     ny;
-        c1*     nz;
-        c2*     nx.*ny;
-        c2*     nx.*nz;
-        c2*     ny.*nz;
-       c2/2*    (nx.^2 - ny.^2);
-  c2/(12)^.5*   (3*nz.^2-1) ];
+Y = [   a0*c0*     ones(size(nx));
+        a1*c1*     nx;
+        a1*c1*     ny;
+        a1*c1*     nz;
+        a2*c2*     nx.*ny;
+        a2*c2*     nx.*nz;
+        a2*c2*     ny.*nz;
+       a2*c2/2*    (nx.^2 - ny.^2);
+  a2*c2/(12)^.5*   (3*nz.^2-1) ];
 
 % pick 1st 4 coefficients and remove nan values
 
@@ -66,6 +66,6 @@ radiosity = im./rho./alb;
 l = radiosity * pinv(Y);
 l(10) = 0;
 l(10) = [];
-l = l'.* [c0; c1; c1; c1;  c2; c2; c2; c2/2; c2/(12)^.5 ];
+l = l'.* [a0*c0; a1*c1; a1*c1; a1*c1;  a2*c2; a2*c2; a2*c2; a2*c2/2; a2*c2/(12)^.5 ];
 end
 

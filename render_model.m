@@ -2,6 +2,9 @@ function [ c ] = render_model( ply_path, sh_coeff, talk,Rpose, cRes, rRes )
 %RENDER_MODEL Summary of this function goes here
 %   Detailed explanation goes here
 import plyread.plyread
+a0 = pi;
+a1 = 2*pi/sqrt(3);
+a2= 2*pi/sqrt(8);
 if nargin < 4
     Rpose = eye(4);
 end
@@ -26,7 +29,7 @@ pts = pts(1:3,:);
 tri = tri';
 pts = pts;
 
-n = [-output.vertex.ny';output.vertex.nx';output.vertex.nz'];
+n = [output.vertex.ny';-output.vertex.nx';output.vertex.nz'];
 n = n./repmat(sum(n.^2).^0.5,3,1);
 % pre-mex conditioning 
 ptsn = pts;

@@ -91,26 +91,26 @@ end
 % fx = [-1 0 1]';         %x is vertical, starting from top
 % fy = [-1 0 1];          %y is horizontal, starting from left
 
-delta = [1 1];
-fx = [-1 1]';
-fy = [-1 1];
-
-p = conv2(depth_map, fx, 'same')/delta(1);
-q = conv2(depth_map, fy, 'same')/delta(2);
-N = 1./(p.^2 + q.^2 +1).^0.5;
-n(:,:,1) = N.*p;
-n(:,:,2) = N.*q;
-n(:,:,3) = N;
-N_ref = 1./N;
-
-
-depth_map(:,end) = NaN;
-depth_map(end,:) = NaN;
-n(end,:,:) = NaN;
-n(:,end,:) = NaN;
-N_ref(end,:) = NaN;
-N_ref(:,end) =NaN;
-
+% delta = [1 1];
+% fx = [1 -1]';
+% fy = [1 -1];
+% 
+% p = conv2(depth_map, fx, 'same')/delta(1);
+% q = conv2(depth_map, fy, 'same')/delta(2);
+% N = 1./(p.^2 + q.^2 +1).^0.5;
+% n(:,:,1) = N.*p;
+% n(:,:,2) = N.*q;
+% n(:,:,3) = N;
+% N_ref = 1./N;
+% 
+% 
+% depth_map(:,end) = NaN;
+% depth_map(end,:) = NaN;
+% n(end,:,:) = NaN;
+% n(:,end,:) = NaN;
+% N_ref(end,:) = NaN;
+% N_ref(:,end) =NaN;
+[ n,N_ref, depth_map ] = normal_from_depth( depth_map );
 if talk
     figure;
     subplot(3,3,[1,2, 4,5 , 7,8])

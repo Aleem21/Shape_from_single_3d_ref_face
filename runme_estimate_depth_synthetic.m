@@ -30,9 +30,9 @@ ply_path = '.\data\sphere.ply';
 % center = 0;
 Rpose = eye(4);
 ply_path = '.\data\ref_model.ply';
-center = 0;
-% [dmap_ref, n_ref, N_ref] = generate_ref_depthmap(ply_path,Scale, talk, cRes, rRes, Rpose,[],center);
-[dmap_ref, n_ref, N_ref] = generate_ref_depthmap_synth(100,1);
+center = 0; 
+[dmap_ref, n_ref, N_ref] = generate_ref_depthmap(ply_path,Scale, talk, cRes, rRes, Rpose,[],center);
+% [dmap_ref, n_ref, N_ref] = generate_ref_depthmap_synth(100,1);
 figure; surf(dmap_ref,'edgealpha',0.5);title('Original Model')
 
 
@@ -40,7 +40,7 @@ figure; surf(dmap_ref,'edgealpha',0.5);title('Original Model')
 alb_ref = ~isnan(N_ref);
 
 %% render image
-l_ren = [0;-0.6;0.5;0.8]/2;
+l_ren = [0;0.5;0.3;0.9; rand(5,1)*2]/4;
 % im = render_model(ply_path,l_ren,talk,Rpose, 150,150);
 im = render_model_noGL( n_ref, l_ren, alb_ref,1);
 title('image')
@@ -49,12 +49,20 @@ talk = 0;
 l_est = estimate_lighting(n_ref, alb_ref, im,4);
 % c4 = render_model('./data/sphere.ply',l_est,talk,Rpose, 150,150);
 c4 = render_model_noGL(n_ref,l_est,alb_ref,talk);
-noise = randn(size(dmap_ref))/8;
-depth = estimate_depth(N_ref,alb_ref,im,dmap_ref+noise,l_est,0.01);
+noise = randn(size(dmap_ref))/8*0;
+depth = estimate_depth(N_ref,alb_ref,im,dmap_ref+noise,l_est,50);
 
-figure; surf(depth,'edgealpha',0.5);title('reconstructed')
-figure; surf(depth-dmap_ref,'edgealpha',0.5);title('error')
+figure; 
+subplot(2,2,1);
+surf(dmap_ref,'edgealpha',0.5);title('original');axis equal
+subplot(2,2,2);
+surf(dmap_ref+noise,'edgealpha',0.5);title('reference');axis equal
+subplot(2,2,3)
+surf(depth,'edgealpha',0.5);title('reconstructed');axis equal
+subplot(2,2,4)
+surf(depth-dmap_ref,'edgealpha',0.5);title('magnified error');axis equal
 error = (depth-dmap_ref).^2;
+
 error(isnan(error)) = 0;
 signal_energy = dmap_ref.^2;
 signal_energy(isnan(signal_energy)) = 0;
