@@ -33,7 +33,7 @@ if talk
         disp('Not displaying pose matching. No input image provided');
     else
         figure;imshow(im);hold on
-        plot(pp(1,:),sz - pp(2,:),'o')
+        plot(pp(1,:),sz - pp(2,:),'ro','markersize',10)
         truesize
     end
     

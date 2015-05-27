@@ -16,8 +16,6 @@ for i=1:n
     impath = [folder_path impaths{i}];
 %% make image
 [im,im_c] = read_image(impath);
-im = imresize(im,0.3);
-im_c = imresize(im_c,0.3);
 %% Run face tracker
 landmarks = stasm_tracker(im,talk);
 

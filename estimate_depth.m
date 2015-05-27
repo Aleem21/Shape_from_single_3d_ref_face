@@ -1,6 +1,10 @@
 function [ depth ] = estimate_depth( N_ref_in, alb_ref, im, z_ref, sh_coeff,lambda1 )
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
+a0 = pi;
+a1 = 2*pi/sqrt(3);
+a2= 2*pi/sqrt(8);
+
 l0 = sh_coeff(1); l1 = sh_coeff(2); l2 = sh_coeff(3); l3 = sh_coeff(4);
 n_rows = size(im,1);
 n_cols = size(im,2);
@@ -91,9 +95,9 @@ for i=1:n_zs
     else
         factor = alb_ref(r_face(i),c_face(i))/N_ref_in(r_face(i),c_face(i));
 %         const = alb_ref(r_face(i),c_face(i))*l0 - factor*l3;
-%         A(i,i) = (-l1 -l2)*factor;
-        elems = inds(sub2ind(size(face),[-1 0]+r_face(i),[0 -1]+c_face(i)));
-        A(i, elems ) = -factor*[l1 l2];
+        A(i,i) = (-l1 -l2)*factor;
+%         elems = inds(sub2ind(size(face),[-1 0]+r_face(i),[0 -1]+c_face(i)));
+%         A(i, elems ) = -factor*[l1 l2];
 %         elems = find_elements([r_face c_face],[1 0]+r_face(i),[0 1]+c_face(i));
         elems = inds(sub2ind(size(face),[1 0]+r_face(i),[0 1]+c_face(i)));
         A(i, elems ) = factor*[l1 l2];
@@ -105,6 +109,7 @@ catch err
 end
 
 % regularization term
+% in_face = in_face-b_in;
 [r_inface,c_inface] = find(in_face);
 
 inface_inds = sub2ind(size(im),r_inface,c_inface);
@@ -112,17 +117,18 @@ inface_inds = sub2ind(size(im),r_inface,c_inface);
 reg = 1;
 if (reg)
 n_in_zs = numel(inface_inds);
-sz = 3; dev = 2;
-% gauss = fspecial('gaussian',sz,dev);
-gauss = [-1 -1  -1; -1 8 -1; -1 -1 -1];
+sz =3; dev = 1;
+gauss = fspecial('gaussian',sz,dev);
+% gauss = [-1 -1  -1; -1 8 -1; -1 -1 -1];
 % gauss = [0 -1  0; -1 4 0; 0 -1 0];
-% rhs_reg = lambda1*(z_ref - conv2(z_ref,gauss,'same'));
-rhs_reg_mat = lambda1*(conv2(z_ref,gauss,'same'));
+rhs_reg_mat = lambda1*(z_ref - conv2(z_ref,gauss,'same'));
+% rhs_reg_mat = lambda1*(conv2(z_ref,gauss,'same'));
 rhs_reg = rhs_reg_mat(inface_inds);
-[boxc, boxr] = meshgrid(-1:1,-1:1);
+f_w = floor(sz/2);
+[boxc, boxr] = meshgrid(-f_w:f_w,-f_w:f_w);
 
-% gauss = -gauss;
-% gauss(2,2) = 1+gauss(2,2);
+gauss = -gauss;
+gauss(2,2) = 1+gauss(2,2);
 gaussVec = lambda1*gauss(:);
 % gaussVec = -lambda1*gauss(:);
 try
@@ -170,14 +176,14 @@ depth(face_inds) = z;
 offset = mean(depth(inface_inds)) - mean(z_ref(inface_inds));
 depth = depth-offset;
 depth(~face) = NaN;
-% figure; surf(depth,'edgealpha',0);
-z2 = z_ref(face_inds);
-err_ref = abs(A*z2-rhs);
-err_est = abs(A*z-rhs);
-depth2 = depth;
-depth2(face_inds) = err_est(1:numel(face_inds));
-depth22 = depth;
-depth22(face_inds) = err_ref(1:numel(face_inds));
+% % figure; surf(depth,'edgealpha',0);
+% z2 = z_ref(face_inds);
+% err_ref = abs(A*z2-rhs);
+% err_est = abs(A*z-rhs);
+% depth2 = depth;
+% depth2(face_inds) = err_est(1:numel(face_inds));
+% depth22 = depth;
+% depth22(face_inds) = err_ref(1:numel(face_inds));
 % figure;plot(err_ref);title('error in ref depth')
 % figure;plot(err_est);title('error in computed depth')
 % figure;imagesc(depth);

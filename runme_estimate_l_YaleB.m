@@ -29,7 +29,7 @@ end
 %% Compute pose
 Rpose = makehgtform('zrotate',deg2rad(-10))*makehgtform('xrotate',deg2rad(20))*makehgtform('yrotate',deg2rad(10));
 
-[Rpose2, Scale] = compute_pose_YaleB(landmarks, 0, im);
+[Rpose2, Scale] = compute_pose_YaleB(landmarks, talk, im);
 % Rpose  = Rpose2 * Rpose;
 % Rpose = makehgtform('scale',[Scale ;1])*Rpose;
 % Rpose(1:3,4) = Rpose2(1:3,4);

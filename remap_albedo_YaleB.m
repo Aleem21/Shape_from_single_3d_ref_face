@@ -10,7 +10,7 @@ if isempty(landmarks_ref)
     return
 end
 pts = [33 43 53 63 75];
-% pts = 1:size(landmarks_ref,2);
+pts = 1:size(landmarks_ref,2);
 H = homography_solve(landmarks_ref(:,pts),landmarks(:,pts));
 H = H';
 % H(:,1:2) = H(:,[2 1]);

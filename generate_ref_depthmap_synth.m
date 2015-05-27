@@ -22,9 +22,9 @@ import plot3D_helper.label_axis
 import plyread.plyread
 import hidden_point_removal.HPR
 [r,c] = meshgrid(0:rrange,0:rrange);
-depth_map = 1*sin(r.*c/200/max(rrange)*51)*rrange/10;
-gauss = fspecial('gaussian',size(depth_map),size(depth_map,1)/8)*0+1;
-depth_map = depth_map.*gauss/max(gauss(:));
+depth_map = sin(r/10/max(rrange)*51)*rrange/10;
+gauss = fspecial('gaussian',size(depth_map),size(depth_map,1)/8)*2;
+depth_map = depth_map.*gauss/max(gauss(:))*3;
 
 depth_map(:,1) = depth_map(:,2);
 depth_map(:,end-1) = depth_map(:,end-2);
