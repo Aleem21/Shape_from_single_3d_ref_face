@@ -1,4 +1,5 @@
-function [ depth_map, n, N_ref,pts ] = generate_ref_depthmap_synth( rrange,talk )
+function [ depth_map, n, N_ref,albedo, pts ] = generate_ref_depthmap_USF( Scale, Rpose, im,im_c, talk )
+
 %GENERATE_REF_DEPTHMAP generated depthmap from reading the ply file of the
 %model, resolution of rows and columns specified by inputs
 %
@@ -21,47 +22,80 @@ import plot3D_helper.plot_pointcloud
 import plot3D_helper.label_axis
 import plyread.plyread
 import hidden_point_removal.HPR
-[r,~] = meshgrid(0:rrange,0:rrange);
-depth_map = sin(r/10/max(rrange)*51)*rrange/10;
-gauss = fspecial('gaussian',size(depth_map),size(depth_map,1)/8)*2;
-depth_map = depth_map.*gauss/max(gauss(:))*3;
-depth_map = max(depth_map(:))+1-depth_map;
 
-depth_map(:,1) = depth_map(:,2);
-depth_map(:,end-1) = depth_map(:,end-2);
-depth_map(:,end) = depth_map(:,end-2);
+if nargin < 4
+    talk = 0;
+end
 
+
+xrange = [1 size(im,2)];
+yrange = [1 size(im,1)]; 
+
+%% Generate reference pointcloud and texture map (albedo)
+[pts,tri,rgb] = read_USF_eko('D:\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test',512,512,talk);
+
+%% data conditioning
+
+%pose correction
+pts_rotated = Rpose*[pts; ones(1,size(pts,2))];
+pts_rotated = pts_rotated(1:3,:);
+pts_rotated(3,:) = pts(3,:)*min(Scale);
+
+
+
+%% generate depth map by calling mex file
+[depth_map,albedo] = computer_depth_USF( pts_rotated,tri,rgb,xrange,yrange,im_c,talk );
+albedo = im2double(rgb2gray(albedo));
 %% draw depth map
 if talk >0
     figure; imagesc(depth_map)
     label_axis(2)
 end
-
+if talk >1
+    figure;
+    surf(depth_map(end:-1:1,:),'edgealpha',0);
+    label_axis(3)
+    
+    figure; imshow(im); hold on;
+    plot(pts(1,:),size(im,1)-pts(2,:),'.r')
+end
 
 %% find normals from depth
 [ n,N_ref ] = normal_from_depth( depth_map );
 
 depth_map(:,end) = NaN;
 depth_map(end,:) = NaN;
+depth_map(:,1) = NaN;
+depth_map(1,:) = NaN;
 
+%% draw stuff
 
-
+% Draw point cloud
+if talk > 2
+    figure;
+    plot_pointcloud(pts,'.b')
+    label_axis();
+end
 
 if talk
     figure;
     subplot(3,3,[1,2, 4,5 , 7,8])
     imagesc(depth_map)
-    xlabel('y')
-    ylabel('x')
-    title('Depth map')
+    xlabel('x')
+    ylabel('y')
+    title('depth map')
+    axis equal; axis off
     subplot(3,3,3)
     imagesc(n(:,:,1))
     title('n_x')
+    axis equal; axis off
     subplot(3,3,6)
     imagesc(n(:,:,2))
     title('n_y')
+    axis equal; axis off
     subplot(3,3,9)
     imagesc(n(:,:,3))
     title('n_z')
+    axis equal; axis off
     truesize
 end

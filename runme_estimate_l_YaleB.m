@@ -41,7 +41,7 @@ ply_path = '.\data\ref_model.ply';
 
 
 %% generate ref albedo
-face_database_path = '../CroppedYale';
+face_database_path = '../datasets/CroppedYale';
 talk = 0;
 alb_ref = get_ref_albedo_YaleB(face_database_path,landmarks,size(im) , fusion_path, talk);
 % alb_ref = ((get_ref_albedo(face_database_path,landmarks, size(im),fusion_path, talk)+0.5).^0.3-0.5);

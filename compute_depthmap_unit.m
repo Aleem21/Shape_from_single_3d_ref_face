@@ -1,4 +1,4 @@
-function [ depth ] = compute_depthmap( pts, tri, xrange, yrange, cRes, rRes,center )
+function [ depth ] = compute_depthmap_unit( pts, tri, rRes, cRes)
 %COMPUTE_DEPTHMAP using the pts and triangulation, generates the depthmap
 %from canonical point of view in orthograhpic projection
 %
@@ -6,10 +6,20 @@ function [ depth ] = compute_depthmap( pts, tri, xrange, yrange, cRes, rRes,cent
 %and we check for the intersection with largest z value. This makes sure we
 %get the point closest from the opposite end i.e. closest to the observer
 %placed on positive z axis looking towards origin.
-
-if nargin < 7
-    center = 1;
+if nargin < 4
+    rRes = 400;
 end
+if nargin < 3
+    cRes = 400;
+end
+
+%% initializations and conditioning
+
+% legacy variables
+xrange = [-1 1];
+yrange = [-1 1];
+
+% if resolution is smaller than this specific value, openGL behaves weirdly
 if cRes<200
     scale = 200/cRes;
     cRes2 = 200;
@@ -18,36 +28,29 @@ else
     cRes2 = cRes;
     rRes2 = rRes;
 end
-    
-%% Data conditioning
+
+% Data conditioning
 if size(tri,1)>4
     tri = tri';
 end
 if size(pts,1)>4
     pts = pts';
 end
-%% conditioning
-ptsn = pts;
-if center
-    ptsn(1,:) = (ptsn(1,:)/cRes-0.5)*2;
-    ptsn(2,:) = (ptsn(2,:)/rRes-0.5)*2;
-end
-ptsn(3,:) = -ptsn(3,:);
 
+pts(3,:) = -pts(3,:);
 tri = tri-1;
 
-%% apply the mex function
-depth  = (mex_compute_depth(ptsn, tri, xrange,yrange,cRes2, rRes2)-0.5)*2;
+%% apply the mex function to compute depth through a call to OPEN GL
+
+depth  = (mex_compute_depth(pts, tri, xrange,yrange,cRes2, rRes2)-0.5)*2;
 depth = -depth(:,end:-1:1)';
 depth(depth==-1 | depth==1) = nan;
 if cRes2~=cRes
     depth = imresize(depth,[rRes,cRes]);
-% 
-% depth  = (mex_compute_depth_new(ptsn, tri, xrange,yrange,cRes, rRes)*2)-1;
-% depth = -depth(:,end:-1:1)';
-% depth(depth==1) = nan;
 end
+
 % convert depth into the inverse map, i.e. the lesser the value, the
 % closer it is from you (camera, placed at origin)
 depth = 1-depth;
-
+% depth = 0 meanns corresponds to z=1 in the model, depth = 2 corresponds
+% to z=-1 in model

@@ -29,7 +29,7 @@ pts = pts(1:3,:);
 tri = tri';
 pts = pts;
 
-n = [output.vertex.ny';-output.vertex.nx';output.vertex.nz'];
+n = [output.vertex.nx';output.vertex.ny';output.vertex.nz'];
 n = n./repmat(sum(n.^2).^0.5,3,1);
 % pre-mex conditioning 
 ptsn = pts;
@@ -50,6 +50,7 @@ c = mex_render_sh(ptsn, tri, n, sh_coeff, cRes, rRes)*2;
 c = im2double(c(:,end:-1:1)');
 if talk
     figure; imshow(c);
+    title('rendered, GL')
 end
 end
 

@@ -1,4 +1,4 @@
-function [ l ] = estimate_lighting( n, alb, im,nComp,talk )
+function [ l ] = estimate_lighting( n, alb, im,nComp,talk,is_ambient,non_lin )
 %ESTIMATE_LIGHTING etimate lighting spherical harmonic coefficients given
 %the normal map and input image
 %
@@ -12,11 +12,15 @@ end
 if nargin<5
     talk = 0;
 end
-
-
+if nargin<6
+    is_ambient = 1;
+end
+if nargin<7
+    non_lin = 1;
+end
 if talk
     rad = im./alb;
-    rad(abs(rad)>1.5)=nan;
+    
     figure;imagesc(rad);
 end
 
@@ -54,8 +58,8 @@ im = im(~isnan(nx))';
 alb = alb(:);
 alb = alb(~isnan(nx))';
 
-bad = im<0.05 | im>0.95 | alb< 0.05;
-
+bad = im<0.1 | im>0.9 | alb< 0.05;
+% bad = [];
 im(bad) = [];
 alb(bad) = [];
 Y(:,bad) = [];
@@ -63,9 +67,32 @@ Y(:,bad) = [];
 rho = ones(size(im));
 radiosity = im./rho./alb;
 
-l = radiosity * pinv(Y);
+if ~is_ambient
+    l = radiosity * pinv(Y(2:end,:));
+    l(2:end+1) = l(1:end);
+    l(1) = 0;
+else
+    if non_lin
+        A = [-1;zeros(size(Y,1)-1,1)]';
+        b = 0;
+        fval = [];l = [];
+        for i=1:3
+            init =[0; rand(size(Y,1)-1,1)];
+            [l(:,end+1),fval(end+1)]=fmincon(@(x)cost_est_l(x,radiosity,Y),init,A,b);
+        
+        end
+        [~,ind] = min(fval);
+        l = l(:,ind);
+        l = l';
+        fprintf('Optimized cost: %d\n',fval);
+    else
+        l = radiosity * pinv(Y);
+    end
+end
 l(10) = 0;
 l(10) = [];
 l = l'.* [a0*c0; a1*c1; a1*c1; a1*c1;  a2*c2; a2*c2; a2*c2; a2*c2/2; a2*c2/(12)^.5 ];
+
+l = double(l);
 end
 

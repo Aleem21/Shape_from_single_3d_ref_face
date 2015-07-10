@@ -29,7 +29,7 @@ end
 %% generate ref depth map
 ply_path = '.\data\ref_model.ply';
 % ply_path ='.\data\sphere.ply';
-[dmap_ref, n_ref, N_ref] = generate_ref_depthmap(ply_path,Scale, talk, size(im,1), size(im,2), Rpose,im);
+[dmap_ref, n_ref, N_ref] = generate_ref_depthmap(ply_path,size(im,1), size(im,2),Rpose,im);
 % [dmap_ref, n_ref] = generate_ref_depthmap(ply_path,Scale, talk, 1000, 1000, Rpose,im);
 
 
