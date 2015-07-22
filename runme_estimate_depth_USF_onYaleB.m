@@ -97,7 +97,7 @@ title(sprintf('Ambient, nonlinear\n A: %.0f, E: %.0f',A_est_amb,E_est_amb));
 % im2 = render_model_noGL(n_ref,l_est,alb_ref,talk);
 % subplot(3,n,count+2*n)
 % imshow(c9)
-for j=1:10
+for j=1:1
     disp(j)
 depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,10,'laplac');
 

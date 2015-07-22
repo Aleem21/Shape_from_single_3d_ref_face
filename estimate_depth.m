@@ -65,15 +65,15 @@ for i=1:n_zs
         %-- for x (rows)
         %if location below is out of bound or not inside face,
         %subtract last entry from current
-        if (r_face(i)+1)>n_rows || ~face(r_face(i)+1,c_face(i))
+        if (r_face(i)-1)<1 || ~face(r_face(i)-1,c_face(i))
 %             neg = find_elements([r_face c_face],r_face(i)-1,c_face(i));
-            neg = inds(r_face(i)-1,c_face(i));
+            neg = inds(r_face(i)+1,c_face(i));
             pos = i;
             % else subtract current entry from next one
         else
             neg = i;
 %             pos = find_elements([r_face c_face],r_face(i)+1,c_face(i));
-            pos = inds(r_face(i)+1,c_face(i));
+            pos = inds(r_face(i)-1,c_face(i));
         end
         % remove boundary points on which boundary conditions can not be
         % computed
@@ -87,15 +87,15 @@ for i=1:n_zs
         % -- for y (cols)
         % if location on right is out of bound or not inside face,
         % subtract last entry from current
-        if (c_face(i)+1)>n_cols || ~face(r_face(i),c_face(i)+1)
+        if (c_face(i)-1)<1 || ~face(r_face(i),c_face(i)-1)
 %             neg = find_elements([r_face c_face],r_face(i),c_face(i)-1);
-            neg = inds(r_face(i),c_face(i)-1);
+            neg = inds(r_face(i),c_face(i)+1);
             pos = i;
             % else subtract current entry from next one
         else
             neg = i;
 %             pos = find_elements([r_face c_face],r_face(i),c_face(i)+1);
-            pos = inds(r_face(i),c_face(i)+1);
+            pos = inds(r_face(i),c_face(i)-1);
         end
         if sum([neg pos]==0)
             bad_boundary(end+1) = i;
