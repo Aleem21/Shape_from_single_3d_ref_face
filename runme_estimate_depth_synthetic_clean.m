@@ -5,12 +5,12 @@ talk = 0;
 %% generate ref depth map
 sigma = 5 ;
 scale = 1;
-[dmap_ref, n_ref, N_ref] = generate_ref_depthmap_synth_clean(200,sigma,scale,talk);
+[dmap_ref, n_ref, N_ref] = generate_ref_depthmap_synth_clean(5,sigma,scale,talk);
 
 %% generate ground truth depth map
 sigma = 5.5;
 scale = 1;
-[dmap_gnd, n_gnd, N_gnd] = generate_ref_depthmap_synth_clean(200,sigma,scale,talk);
+[dmap_gnd, n_gnd, N_gnd] = generate_ref_depthmap_synth_clean(5,sigma,scale,talk);
 
 %% generate ref albedo
 alb_ref = ~isnan(N_ref);
@@ -30,7 +30,7 @@ l_est = estimate_lighting(n_ref, alb_ref, im,4,is_amb,non_lin);
 c4 = render_model_noGL(n_ref,l_est,alb_ref,talk);
 for i=1:20
     disp(i)
-    depth = estimate_depth(N_gnd,alb_ref,im,dmap_ref,l_ren,0.1,'laplac',dmap_gnd,talk);
+    depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_ren,0.1,'laplac',dmap_gnd,talk);
     % figure;
     % subplot(2,2,1);
     % surf(dmap_gnd,'edgealpha',0.5);title('original');

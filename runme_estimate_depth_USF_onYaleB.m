@@ -97,7 +97,16 @@ title(sprintf('Ambient, nonlinear\n A: %.0f, E: %.0f',A_est_amb,E_est_amb));
 % im2 = render_model_noGL(n_ref,l_est,alb_ref,talk);
 % subplot(3,n,count+2*n)
 % imshow(c9)
-depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,0.1,'dz');
+for j=1:10
+    disp(j)
+depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,10,'laplac');
+
+[ ~,N_ref2 ] = normal_from_depth( depth );
+%     N_ref = (N_ref+N_ref2)/2;
+N_ref = N_ref2;
+
+ depths{j} = depth;
+end
 figure; surf(depth);axis equal
 [n_new,N_ref_new] =normal_from_depth( depth );
 p = n_ref(:,:,1).*N_ref;

@@ -1,6 +1,9 @@
 function [ depth ] = estimate_depth( N_ref_in, alb_ref, im, z_ref, sh_coeff,lambda1,reg_type,z_gnd,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
+if nargin < 8
+    talk = 0;
+end
 a0 = pi;
 a1 = 2*pi/sqrt(3);
 a2= 2*pi/sqrt(8);
