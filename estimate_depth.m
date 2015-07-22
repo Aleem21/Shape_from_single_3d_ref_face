@@ -1,4 +1,4 @@
-function [ depth ] = estimate_depth( N_ref_in, alb_ref, im, z_ref, sh_coeff,lambda1,reg_type)
+function [ depth ] = estimate_depth( N_ref_in, alb_ref, im, z_ref, sh_coeff,lambda1,reg_type,z_gnd,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
 a0 = pi;
@@ -23,8 +23,8 @@ ncx(~b_out) = NaN;
 ncy(~b_out) = NaN;
 face_inds = sub2ind(size(im),r_face,c_face);
 
-ncx = -0.01*ncx(face_inds);
-ncy = -0.01*ncy(face_inds);
+ncx = -ncx(face_inds);
+ncy = -ncy(face_inds);
 I = im(face_inds);
 rho_ref = alb_ref(face_inds);
 N_ref = N_ref_in(face_inds);
@@ -33,7 +33,9 @@ N_ref = N_ref_in(face_inds);
 
 n_zs = numel(I);
 % A = zeros(n_zs, n_zs+1);
-tic
+if talk
+    tic
+end
 n_boundary = sum(b_out(:));
 % A = sparse(n_zs+n_boundary, n_zs);
 A = sparse([],[],[],n_zs+n_boundary, n_zs,sum(in_face(:))*3 + sum(b_out(:))*4 + sum(in_face(:))*9);
@@ -112,8 +114,8 @@ for i=1:n_zs
         end
         %         const = alb_ref(r_face(i),c_face(i))*l0 - factor*l3;
         elems = inds(sub2ind(size(face),[0 1]+r_face(i),[1 0]+c_face(i)));
-%         A(i,i) = (-l1 -l2)*factor;
-        A(i,elems) = [-l1 -l2]*factor;
+        A(i,i) = (-l1 -l2)*factor;
+%         A(i,elems) = [-l1 -l2]*factor;
         %         elems = inds(sub2ind(size(face),[-1 0]+r_face(i),[0 -1]+c_face(i)));
         %         A(i, elems ) = -factor*[l1 l2];
         %         elems = find_elements([r_face c_face],[1 0]+r_face(i),[0 1]+c_face(i));
@@ -144,7 +146,7 @@ gauss = fspecial('gaussian',sz,dev);
 rhs_reg_mat = lambda1*(z_ref - conv2(z_ref,gauss,'same'));
 
 % del me dz only
-if reg_type
+if strcmp(reg_type,'dz')
     rhs_reg_mat = lambda1*(z_ref);
 end
 % end del me dz only
@@ -159,7 +161,7 @@ gauss = -gauss;
 gauss(2,2) = 1+gauss(2,2);
 
 %del me dz only
-if reg_type
+if strcmp(reg_type,'dz')
     gauss = gauss*0;
     gauss(2,2) = 1;
 end
@@ -184,7 +186,9 @@ end
 %     % find elements in order NW, N, NE, W, MID, E, SW, S, SE
 %     inds = find_elements([r_face c_face],[-1 -1 -1 0 0 0 1 1 1]+r_inface(i),[-1 0 1 -1 0 1 -1 0 1]+c_inface(i));
 % end
-toc
+if talk
+    toc
+end
 % rhs = (I./rho_ref - l0).*N_ref + l3;
 rhs = (I - rho_ref*l0 + rho_ref./N_ref*l3);
 rhs(I<0.01) = rhs(I<0.01)/dark_factor;
@@ -217,10 +221,15 @@ z = A\rhs;
 depth = NaN(size(N_ref_in));
 depth(face_inds) = z;
 offset = mean(depth(inface_inds)) - mean(z_ref(inface_inds));
-% depth = depth-offset;
-depth(~in_face) = NaN;
+depth = depth-offset;
+depth(~face) = NaN;
 % % figure; surf(depth,'edgealpha',0);
-z2 = z_ref(face_inds);
+
+if nargin>7
+    z2 = z_gnd(face_inds);
+else
+    z2 = z_ref(face_inds);
+end
 err_ref = abs(A*z2-rhs);
 err_est = abs(A*z-rhs);
 % depth2 = depth;
@@ -232,14 +241,17 @@ bnd_s = e+1;
 bnd_e = e+n_boundary-numel(bad_boundary);
 reg_s = bnd_e+1;
 reg_e = bnd_e+n_in_zs;
-
-figure;plot(s:e+1,err_ref(s:e+1),bnd_s:bnd_e+1,err_ref(bnd_s:bnd_e+1),reg_s:reg_e,err_ref(reg_s:reg_e));title('error in ref depth')
-figure;plot(s:e+1,err_est(s:e+1),bnd_s:bnd_e+1,err_est(bnd_s:bnd_e+1),reg_s:reg_e,err_est(reg_s:reg_e));title('error in computed depth')
-face_cost_ref = NaN(size(face));
-face_cost_ref(constraint_inds) = err_ref(s:e);
-figure;imagesc(face_cost_ref);title('constraint cost, ref face')
-face_cost_est = NaN(size(face));
-face_cost_est (constraint_inds) = err_est(s:e);
-figure;imagesc(face_cost_est);title('constraint cost, ref est')
+if talk
+    figure;plot(s:e+1,err_ref(s:e+1),bnd_s:bnd_e+1,err_ref(bnd_s:bnd_e+1),reg_s:reg_e,err_ref(reg_s:reg_e));title('error in ref depth')
+    fprintf('Ground truth error = %d\n',sum(err_ref.^2));
+    figure;plot(s:e+1,err_est(s:e+1),bnd_s:bnd_e+1,err_est(bnd_s:bnd_e+1),reg_s:reg_e,err_est(reg_s:reg_e));title('error in computed depth')
+    fprintf('Estimated error = %d\n',sum(err_est.^2));
+    face_cost_ref = NaN(size(face));
+    face_cost_ref(constraint_inds) = err_ref(s:e);
+    figure;imagesc(face_cost_ref);title('constraint cost, ref face')
+    face_cost_est = NaN(size(face));
+    face_cost_est (constraint_inds) = err_est(s:e);
+    figure;imagesc(face_cost_est);title('constraint cost, ref est')
+end
 % figure;imagesc(depth);
 % figure;imagesc(depth2)

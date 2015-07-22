@@ -22,6 +22,7 @@ if talk
     rad = im./alb;
     
     figure;imagesc(rad);
+    title('Radiosity (image / albedo)')
 end
 
 a0 = pi;
@@ -58,7 +59,7 @@ im = im(~isnan(nx))';
 alb = alb(:);
 alb = alb(~isnan(nx))';
 
-bad = im<0.1 | im>0.9 | alb< 0.05;
+bad = im<0.01 | im>0.9 | alb< 0.05;
 % bad = [];
 im(bad) = [];
 alb(bad) = [];

@@ -6,8 +6,8 @@ delta = [2 2];
 % order of 1,-1 is flipped because conv2 function adds another flip itself.
 fx = [0 -1 1];
 fy = [0 -1 1]';
-fx = [-1 0 1];
-fy = [-1 0 1]';
+% fx = [-1 0 1];
+% fy = [-1 0 1]';
 p = conv2(depth_map, fx, 'same')/delta(1);
 q = conv2(depth_map, fy, 'same')/delta(2);
 N_ref = (p.^2 + q.^2 +1).^0.5;

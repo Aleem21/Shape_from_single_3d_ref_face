@@ -6,7 +6,7 @@ fusion_path = '.\data\fusion.jpg';
 %% set initial variables
 folder_path = '.\data\USF_images\';
 talk = 4;
-impaths = {'03600c34.eko'};
+impaths = {'03721c15.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
@@ -115,7 +115,7 @@ title(sprintf('Recovered\n A: %.0f, E: %.0f',A_est_amb_lin,E_est_amb_lin));
 % im2 = render_model_noGL(n_ref,l_est,alb_ref,talk);
 % subplot(3,n,count+2*n)
 % imshow(c9)
-depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,30,0);
+depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,30,'laplac');
 figure; surf(depth);
 [n_new,N_ref_new] =normal_from_depth( depth );
 p = n_ref(:,:,1).*N_ref;

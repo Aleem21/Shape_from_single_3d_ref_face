@@ -5,7 +5,7 @@ fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
 folder_path = '.\data\yaleB_l_test\';
-talk = 0;
+talk = 4;
 impaths = {'yaleB08_P00A+000E+00.pgm','yaleB01_P00A+000E+00.pgm', 'yaleB01_P00A+000E+45.pgm','yaleB01_P00A+000E+90.pgm'...
     ,'yaleB01_P00A+025E+00.pgm','yaleB01_P00A+050E+00.pgm','yaleB01_P00A+070E+45.pgm'};
 n = numel(impaths);
@@ -52,10 +52,10 @@ x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
 A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
 
 is_ambient = 0;
-l_est = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient);
+non_lin = 0;
+l_est = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin);
 x = l_est(2);   y = l_est(3);   z = -l_est(4);
 A_est = atan2d(x,z);    E_est = atan2d(y,z);
-
 
 is_ambient = 1;
 non_lin = 1;
@@ -97,7 +97,7 @@ title(sprintf('Ambient, nonlinear\n A: %.0f, E: %.0f',A_est_amb,E_est_amb));
 % im2 = render_model_noGL(n_ref,l_est,alb_ref,talk);
 % subplot(3,n,count+2*n)
 % imshow(c9)
-depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,0.08,1);
+depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,0.1,'dz');
 figure; surf(depth);axis equal
 [n_new,N_ref_new] =normal_from_depth( depth );
 p = n_ref(:,:,1).*N_ref;
