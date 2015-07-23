@@ -34,7 +34,8 @@ end
 
 %% no texture version
 im_c = render_model_noGL(n_gt,sh_coeff/2,im_c*0+1,0);
-im = rgb2gray(im_c);
+im = im_c(:,:,1);
+% im = rgb2gray(im_c);
 
 %% Compute pose
 restrictive = 0;
@@ -66,11 +67,11 @@ x = l_est(2);   y = l_est(3);   z = -l_est(4);
 A_est = atan2d(x,z);    E_est = atan2d(y,z);
 
 
-is_ambient = 1;
-non_lin = 1;
-l_est_amb = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin);
-x = l_est_amb(2);   y = l_est_amb(3);   z = -l_est_amb(4);
-A_est_amb = atan2d(x,z);    E_est_amb = atan2d(y,z);
+% is_ambient = 1;
+% non_lin = 1;
+% l_est_amb = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin);
+% x = l_est_amb(2);   y = l_est_amb(3);   z = -l_est_amb(4);
+% A_est_amb = atan2d(x,z);    E_est_amb = atan2d(y,z);
 
 
 Rpose = eye(4);
@@ -78,7 +79,7 @@ xrange = [-150 150];
 yrange = [-150 150];
 c4 = render_model_general('./data/sphere.ply', l_est, Rpose, 1000, 1000, xrange, yrange, talk);
 c4_amb_lin = render_model_general('./data/sphere.ply', l_est_amb_lin, Rpose, 1000, 1000, xrange, yrange, talk);
-c4_amb = render_model_general('./data/sphere.ply', l_est_amb, Rpose, 1000, 1000, xrange, yrange, talk);
+% c4_amb = render_model_general('./data/sphere.ply', l_est_amb, Rpose, 1000, 1000, xrange, yrange, talk);
 
 
 figure(f)
@@ -86,9 +87,9 @@ subplot(1,2,1)
 imshow(im_c)
 title(sprintf('Ground truth\n A: %.0f, E: %.0f',A_gt,E_gt));
 
-subplot(1,2,2)
-imshow(c4_amb)
-title(sprintf('Recovered\n A: %.0f, E: %.0f',A_est_amb_lin,E_est_amb_lin));
+% subplot(1,2,2)
+% imshow(c4_amb)
+% title(sprintf('Recovered\n A: %.0f, E: %.0f',A_est_amb_lin,E_est_amb_lin));
 
 
 % subplot(4,min(n,3),count)
@@ -121,11 +122,12 @@ n_ref = n_gt;
 dmap_ref = z_gt-max(z_gt(:));
 talk = 1;
 l_est = sh_coeff/2;
+N_ref_cur = N_ref;
 for j = 1:1
-    depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,1000,'laplac');
+    depth = estimate_depth(N_ref_cur,alb_ref,im,dmap_ref,l_est,10,'laplac');
     
     [ ~,N_ref2 ] = normal_from_depth( depth );
-    %     N_ref = (N_ref+N_ref2)/2;
+        N_ref_cur = (N_ref_cur+N_ref2)/2;
 %     N_ref = N_ref2;
     
     depths{j} = depth;

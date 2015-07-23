@@ -224,7 +224,7 @@ z = A\rhs;
 depth = NaN(size(N_ref_in));
 depth(face_inds) = z;
 offset = mean(depth(inface_inds)) - mean(z_ref(inface_inds));
-% depth = depth-offset;
+depth = depth-offset;
 depth(~face) = NaN;
 % % figure; surf(depth,'edgealpha',0);
 

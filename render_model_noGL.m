@@ -36,7 +36,7 @@ else
     Y1 = Y(1,:);
     Y2 = Y(2:end,:);
     im = alb.*(sh_coeff1*Y1 +  sh_coeff2*Y2);
-    im(im<0) = 0;
+%     im(im<0) = 0;
     im = reshape(im,size(n,1),size(n,2));
 end
 if talk
