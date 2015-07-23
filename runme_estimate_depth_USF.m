@@ -5,7 +5,7 @@ fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
 folder_path = '.\data\USF_images\';
-talk = 4;
+talk = 0;
 impaths = {'03721c15.eko'};
 n = numel(impaths);
 f=figure;hold on
@@ -15,13 +15,13 @@ count = 1;
 for i=1:1
     impath = [folder_path impaths{i}];
 %% make image
-sh_coeff = [0 0.5 0.4 -1.3];
+sh_coeff = [0 0.5 0.5 -1.3];
 x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
 A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
 
 Rpose = makehgtform('yrotate',deg2rad(0));
 [im,im_c,z_gt]=read_render_USF(impath,Rpose);
-[n_gt]=normal_from_depth(z_gt);
+[n_gt,N_gnd]=normal_from_depth(z_gt);
 im_c = render_model_noGL(n_gt,sh_coeff/2,im_c,0);
 im = rgb2gray(im_c);
 %% Run face tracker
@@ -115,8 +115,22 @@ title(sprintf('Recovered\n A: %.0f, E: %.0f',A_est_amb_lin,E_est_amb_lin));
 % im2 = render_model_noGL(n_ref,l_est,alb_ref,talk);
 % subplot(3,n,count+2*n)
 % imshow(c9)
-depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,30,'laplac');
-figure; surf(depth);
+N_gnd(isnan(N_ref))=NaN;
+N_ref = N_gnd;
+n_ref = n_gt;
+dmap_ref = z_gt-max(z_gt(:));
+talk = 1;
+l_est = sh_coeff/2;
+for j = 1:1
+    depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_est,1000,'laplac');
+    
+    [ ~,N_ref2 ] = normal_from_depth( depth );
+    %     N_ref = (N_ref+N_ref2)/2;
+%     N_ref = N_ref2;
+    
+    depths{j} = depth;
+end
+figure; surf(depth);axis equal
 [n_new,N_ref_new] =normal_from_depth( depth );
 p = n_ref(:,:,1).*N_ref;
 q = n_ref(:,:,2).*N_ref;

@@ -2,7 +2,7 @@ function [ depth ] = estimate_depth( N_ref_in, alb_ref, im, z_ref, sh_coeff,lamb
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
 if nargin < 8
-    talk = 0;
+    talk = 1;
 end
 a0 = pi;
 a1 = 2*pi/sqrt(3);
@@ -26,8 +26,8 @@ ncx(~b_out) = NaN;
 ncy(~b_out) = NaN;
 face_inds = sub2ind(size(im),r_face,c_face);
 
-ncx = -ncx(face_inds);
-ncy = -ncy(face_inds);
+ncx = -0.001*ncx(face_inds);
+ncy = -0.001*ncy(face_inds);
 I = im(face_inds);
 rho_ref = alb_ref(face_inds);
 N_ref = N_ref_in(face_inds);
@@ -111,15 +111,15 @@ for i=1:n_zs
             counter = counter + 1;
         end
     else
-        factor = alb_ref(r_face(i),c_face(i))/N_ref_in(r_face(i),c_face(i))/2;
+        factor = alb_ref(r_face(i),c_face(i))/N_ref_in(r_face(i),c_face(i));
         if I(i)<0.01
             factor = factor/dark_factor;
         end
         %         const = alb_ref(r_face(i),c_face(i))*l0 - factor*l3;
-        elems = inds(sub2ind(size(face),[0 1]+r_face(i),[1 0]+c_face(i)));
+%         elems = inds(sub2ind(size(face),[0 +1]+r_face(i),[+1 0]+c_face(i)));
         A(i,i) = (-l1 -l2)*factor;
 %         A(i,elems) = [-l1 -l2]*factor;
-        %         elems = inds(sub2ind(size(face),[-1 0]+r_face(i),[0 -1]+c_face(i)));
+%                 elems = inds(sub2ind(size(face),[-1 0]+r_face(i),[0 -1]+c_face(i)));
         %         A(i, elems ) = -factor*[l1 l2];
         %         elems = find_elements([r_face c_face],[1 0]+r_face(i),[0 1]+c_face(i));
         elems = inds(sub2ind(size(face),[0 -1]+r_face(i),[-1 0]+c_face(i)));
@@ -224,7 +224,7 @@ z = A\rhs;
 depth = NaN(size(N_ref_in));
 depth(face_inds) = z;
 offset = mean(depth(inface_inds)) - mean(z_ref(inface_inds));
-depth = depth-offset;
+% depth = depth-offset;
 depth(~face) = NaN;
 % % figure; surf(depth,'edgealpha',0);
 
