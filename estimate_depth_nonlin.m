@@ -17,15 +17,15 @@ inface_inds = sub2ind(size(im),r_inface,c_inface);
 [r_face,c_face] = find(face);
 
 %contour normals
-[ncy,ncx] = find_countour_normal(b_out);
+[ncy,ncx] = find_countour_normal(b_out_full);
 % [b_out,b_in] = find_boundary(~isnan(N_ref_in),0);
-ncx(~b_out) = NaN;
-ncy(~b_out) = NaN;
+ncx(~b_out_full) = NaN;
+ncy(~b_out_full) = NaN;
 face_inds = sub2ind(size(im),r_face,c_face);
 face_inds2d = nan(size(face));
 face_inds2d(face) = face_inds;
-ncx = -ncx(b_out);
-ncy = -ncy(b_out);
+ncx = -0.0001*ncx(b_out_full);
+ncy = -0.0001*ncy(b_out_full);
 I = im(face_inds);
 rho_ref = alb_ref(face_inds);
 N_ref = N_ref_in(face_inds);
@@ -153,44 +153,44 @@ im(in_face),rhs_reg,sh_coeff,alb_ref(in_face),gaussVec);
 %     ncx,ncy,iz_reg,...
 %     im(in_face),rhs_reg,sh_coeff,alb_ref(in_face),gaussVec);
 init_z = z_ref(face);
-options = optimoptions(@fminunc,'Display','iter-detailed');
-[z,fval]=fminunc(costfun,init_z,options);
+options = optimset('Display','iter-detailed','maxIter',100,'JacobPattern',jacobianPattern);
+[z,fval]=lsqnonlin(costfun,init_z,[],[],options);
 % zend = z(end);
 % z = z(1:end-1)/z(end);
 depth = NaN(size(N_ref_in));
 depth(face_inds) = z;
 offset = mean(depth(inface_inds)) - mean(z_ref(inface_inds));
 depth = depth-offset;
-depth(~face) = NaN;
+depth(~in_face) = NaN;
 % % figure; surf(depth,'edgealpha',0);
-
-if nargin>7
-    z2 = z_gnd(face_inds);
-else
-    z2 = z_ref(face_inds);
-end
-err_ref = abs(A*z2-rhs);
-err_est = abs(A*z-rhs);
-% depth2 = depth;
-% depth2(face_inds) = err_est(1:numel(face_inds));
-% depth22 = depth;
-% depth22(face_inds) = err_ref(1:numel(face_inds));
-s = 1; e = n_zs-n_boundary;
-bnd_s = e+1;
-bnd_e = e+n_boundary-numel(bad_boundary);
-reg_s = bnd_e+1;
-reg_e = bnd_e+n_in_zs;
-if talk
-    figure;plot(s:e+1,err_ref(s:e+1),bnd_s:bnd_e+1,err_ref(bnd_s:bnd_e+1),reg_s:reg_e,err_ref(reg_s:reg_e));title('error in ref depth')
-    fprintf('Ground truth error = %d\n',sum(err_ref.^2));
-    figure;plot(s:e+1,err_est(s:e+1),bnd_s:bnd_e+1,err_est(bnd_s:bnd_e+1),reg_s:reg_e,err_est(reg_s:reg_e));title('error in computed depth')
-    fprintf('Estimated error = %d\n',sum(err_est.^2));
-    face_cost_ref = NaN(size(face));
-    face_cost_ref(constraint_inds) = err_ref(s:e);
-    figure;imagesc(face_cost_ref);title('constraint cost, ref face')
-    face_cost_est = NaN(size(face));
-    face_cost_est (constraint_inds) = err_est(s:e);
-    figure;imagesc(face_cost_est);title('constraint cost, ref est')
-end
+% 
+% if nargin>7
+%     z2 = z_gnd(face_inds);
+% else
+%     z2 = z_ref(face_inds);
+% end
+% err_ref = abs(A*z2-rhs);
+% err_est = abs(A*z-rhs);
+% % depth2 = depth;
+% % depth2(face_inds) = err_est(1:numel(face_inds));
+% % depth22 = depth;
+% % depth22(face_inds) = err_ref(1:numel(face_inds));
+% s = 1; e = n_zs-n_boundary;
+% bnd_s = e+1;
+% bnd_e = e+n_boundary-numel(bad_boundary);
+% reg_s = bnd_e+1;
+% reg_e = bnd_e+n_in_zs;
+% if talk
+%     figure;plot(s:e+1,err_ref(s:e+1),bnd_s:bnd_e+1,err_ref(bnd_s:bnd_e+1),reg_s:reg_e,err_ref(reg_s:reg_e));title('error in ref depth')
+%     fprintf('Ground truth error = %d\n',sum(err_ref.^2));
+%     figure;plot(s:e+1,err_est(s:e+1),bnd_s:bnd_e+1,err_est(bnd_s:bnd_e+1),reg_s:reg_e,err_est(reg_s:reg_e));title('error in computed depth')
+%     fprintf('Estimated error = %d\n',sum(err_est.^2));
+%     face_cost_ref = NaN(size(face));
+%     face_cost_ref(constraint_inds) = err_ref(s:e);
+%     figure;imagesc(face_cost_ref);title('constraint cost, ref face')
+%     face_cost_est = NaN(size(face));
+%     face_cost_est (constraint_inds) = err_est(s:e);
+%     figure;imagesc(face_cost_est);title('constraint cost, ref est')
+% end
 % figure;imagesc(depth);
 % figure;imagesc(depth2)

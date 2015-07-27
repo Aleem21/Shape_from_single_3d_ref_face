@@ -38,7 +38,7 @@ im = im_c(:,:,1);
 % im = rgb2gray(im_c);
 
 %% Compute pose
-restrictive = 0;
+restrictive = 1;
 [Rpose, Scale] = compute_pose_USF(landmarks, talk, im,restrictive);
 
 % Rpose = Rpose/R;
@@ -126,7 +126,7 @@ N_ref_cur = N_ref;
 
 for j = 1:1
 %     depth = estimate_depth(N_ref_cur,alb_ref,im,dmap_ref,l_est,30,'laplac');
-    depth = estimate_depth_nonlin(N_ref_cur,alb_ref,im,dmap_ref,l_est,30,'laplac');
+    depth = estimate_depth_nonlin(N_ref_cur,alb_ref,im,dmap_ref,l_est,0.1,'laplac');
     
     [ ~,N_ref2 ] = normal_from_depth( depth );
         N_ref_cur = (N_ref_cur+N_ref2)/2;
