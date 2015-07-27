@@ -59,7 +59,7 @@ xn = inds(sub2ind(size(im),r_inface,c_inface));
 
 yp = inds(sub2ind(size(im),r_inface-1,c_inface));
 yn = inds(sub2ind(size(im),r_inface,c_inface));
-[r_bound,c_bound] = find(b_out);
+[r_bound,c_bound] = find(b_out_full);
 yp_bound = [];
 yn_bound = [];
 
@@ -123,23 +123,23 @@ for i=1:n_in_zs
      elems3x3 = inds(sub2ind(size(face),boxr(:)+r_inface(i),boxc(:)+c_inface(i)));
     iz_reg(end+1,:) = elems3x3;
 end
-% 
-% nR = 2*sum(in_face(:)) + sum(b_out_full(:));
-% nC = sum(face(:));
-% nOnes = sum(in_face(:))*(3+9) + sum(b_out_full(:))*4;
-% jacobianPattern = sparse([],[],[],nR,nC,nOnes);
-% constNumber = repmat(1:numel(xp),4,1)';
-% jacobianPattern(sub2ind([nR nC],constNumber,[xp yp xn yn])) = 1;
-% 
-% offset = numel(yn);
-% constNumber = repmat(1:numel(xp_bound),4,1)' + offset;
-% jacobianPattern(sub2ind([nR nC],constNumber,...
-%     [xp_bound yp_bound xn_bound yn_bound])) = 1;
-% 
-% offset = offset + numel(xp_bound);
-% constNumber = repmat(1:size(iz_reg,1),9,1)' + offset;
-% jacobianPattern(sub2ind([nR nC],constNumber,...
-%     iz_reg)) = 1;
+
+nR = 2*sum(in_face(:)) + sum(b_out_full(:));
+nC = sum(face(:));
+nOnes = sum(in_face(:))*(3+9) + sum(b_out_full(:))*4;
+jacobianPattern = sparse([],[],[],nR,nC,nOnes);
+constNumber = repmat(1:numel(xp),4,1)';
+jacobianPattern(sub2ind([nR nC],constNumber,[xp yp xn yn])) = 1;
+
+offset = numel(yn);
+constNumber = repmat(1:numel(xp_bound),4,1)' + offset;
+jacobianPattern(sub2ind([nR nC],constNumber,...
+    [xp_bound yp_bound xn_bound yn_bound])) = 1;
+
+offset = offset + numel(xp_bound);
+constNumber = repmat(1:size(iz_reg,1),9,1)' + offset;
+jacobianPattern(sub2ind([nR nC],constNumber,...
+    iz_reg)) = 1;
 
 
 
