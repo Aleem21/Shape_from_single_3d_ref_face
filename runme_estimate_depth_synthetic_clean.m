@@ -28,7 +28,7 @@ non_lin = 0;
 l_est = estimate_lighting(n_ref, alb_ref, im,4,is_amb,non_lin);
 
 c4 = render_model_noGL(n_ref,l_est,alb_ref,talk);
-for i=1:20
+for i=1:7
     disp(i)
     depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l_ren,0.1,'laplac',dmap_gnd,talk);
     % figure;

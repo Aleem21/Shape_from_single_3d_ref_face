@@ -26,8 +26,8 @@ ncx(~b_out) = NaN;
 ncy(~b_out) = NaN;
 face_inds = sub2ind(size(im),r_face,c_face);
 
-ncx = -0.001*ncx(face_inds);
-ncy = -0.001*ncy(face_inds);
+ncx = -ncx(face_inds);
+ncy = -ncy(face_inds);
 I = im(face_inds);
 rho_ref = alb_ref(face_inds);
 N_ref = N_ref_in(face_inds);
@@ -233,8 +233,8 @@ if nargin>7
 else
     z2 = z_ref(face_inds);
 end
-err_ref = abs(A*z2-rhs);
-err_est = abs(A*z-rhs);
+err_ref = (A*z2-rhs).^2;
+err_est = (A*z-rhs).^2;
 % depth2 = depth;
 % depth2(face_inds) = err_est(1:numel(face_inds));
 % depth22 = depth;

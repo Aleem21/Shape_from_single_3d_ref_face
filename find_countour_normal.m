@@ -1,7 +1,7 @@
 function [ gx,gy,g ] = find_countour_normal( boundary )
 %FIND_COUNTOUR_NORMAL Summary of this function goes here
 %   Detailed explanation goes here
-
+boundary = double(boundary);
 sq2 = 1/sqrt(2);
 sq2 = 1;
 %derivative helping masks

@@ -14,9 +14,12 @@ end
 convbw = conv2(double(bw),box,'same');
 boundNout = convbw<sum(box(:));
 boundary = boundNout.*bw;
+boundary = boundary>0;
+
 if nargout >1
     inside = (bw-boundary)>0;
     in_bound = find_boundary(inside,full);
+    in_bound = in_bound>0;
 end
 end
 

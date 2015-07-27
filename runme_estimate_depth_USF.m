@@ -20,7 +20,7 @@ x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
 A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
 
 Rpose = makehgtform('yrotate',deg2rad(0));
-[im,im_c,z_gt]=read_render_USF(impath,Rpose);
+[im,im_c,z_gt]=read_render_USF(impath,Rpose,[200 200]);
 [n_gt,N_gnd]=normal_from_depth(z_gt);
 im_c = render_model_noGL(n_gt,sh_coeff/2,im_c,0);
 im = rgb2gray(im_c);
@@ -112,19 +112,21 @@ title(sprintf('Ground truth\n A: %.0f, E: %.0f',A_gt,E_gt));
 % title(sprintf('Ambient, nonlinear\n A: %.0f, E: %.0f',A_est_amb,E_est_amb));
 
 
-
+N_ref(isnan(im))=nan;
 % im2 = render_model_noGL(n_ref,l_est,alb_ref,talk);
 % subplot(3,n,count+2*n)
 % imshow(c9)
 N_gnd(isnan(N_ref))=NaN;
-N_ref = N_gnd;
-n_ref = n_gt;
-dmap_ref = z_gt-max(z_gt(:));
+% N_ref = N_gnd;
+% n_ref = n_gt;
+% dmap_ref = z_gt-max(z_gt(:));
 talk = 1;
 l_est = sh_coeff/2;
 N_ref_cur = N_ref;
+
 for j = 1:1
-    depth = estimate_depth(N_ref_cur,alb_ref,im,dmap_ref,l_est,10,'laplac');
+%     depth = estimate_depth(N_ref_cur,alb_ref,im,dmap_ref,l_est,30,'laplac');
+    depth = estimate_depth_nonlin(N_ref_cur,alb_ref,im,dmap_ref,l_est,30,'laplac');
     
     [ ~,N_ref2 ] = normal_from_depth( depth );
         N_ref_cur = (N_ref_cur+N_ref2)/2;
