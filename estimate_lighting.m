@@ -60,7 +60,7 @@ alb = alb(:);
 alb = alb(~isnan(nx))';
 
 bad = im<0.01 | im>0.9 | alb< 0.05;
-% bad = [];
+bad = [];
 im(bad) = [];
 alb(bad) = [];
 Y(:,bad) = [];

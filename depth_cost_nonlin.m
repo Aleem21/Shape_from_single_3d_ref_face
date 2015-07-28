@@ -19,7 +19,6 @@ cost = [cost_data; cost_bound; cost_reg];
 
 %% jacobian
 if nargout >1
-    tic
     nR = numel(cost);
     nC = numel(z);
     d2 = (p.^2+q.^2+1);
@@ -42,10 +41,7 @@ if nargout >1
     jacobian = sparse([constNumber1(:); constNumber2(:); constNumber3(:)]...
         ,[i_p(:); i_q(:,1);i_bx(:);i_by(:);iz_reg(:) ]...
         ,[data_rhs(:); bnd_rhs(:); reg_rhs(:)],...
-        nR,nC);
-    
-    toc
-        
+        nR,nC);        
 end
 end
 

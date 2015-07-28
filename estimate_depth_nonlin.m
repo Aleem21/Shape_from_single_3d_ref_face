@@ -1,7 +1,7 @@
-function [ depth ] = estimate_depth_nonlin( N_ref_in, alb_ref, im, z_ref, sh_coeff,lambda1,reg_type,z_gnd,talk)
+function [ depth ] = estimate_depth_nonlin( N_ref_in, alb_ref, im, z_ref, sh_coeff,lambda1,max_iter,reg_type,z_gnd,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
-if nargin < 8
+if nargin < 10
     talk = 1;
 end
 
@@ -24,8 +24,8 @@ ncy(~b_out_full) = NaN;
 face_inds = sub2ind(size(im),r_face,c_face);
 face_inds2d = nan(size(face));
 face_inds2d(face) = face_inds;
-ncx = -0.0001*ncx(b_out_full);
-ncy = -0.0001*ncy(b_out_full);
+ncx = -ncx(b_out_full);
+ncy = -ncy(b_out_full);
 I = im(face_inds);
 rho_ref = alb_ref(face_inds);
 N_ref = N_ref_in(face_inds);
@@ -154,9 +154,13 @@ im(in_face),rhs_reg,sh_coeff,alb_ref(in_face),gaussVec);
 %     im(in_face),rhs_reg,sh_coeff,alb_ref(in_face),gaussVec);
 init_z = z_ref(face);
 % options = optimset('Display','iter-detailed','maxIter',100,'JacobPattern',jacobianPattern);
-options = optimset('Display','iter-detailed','maxIter',3,...
-    'Jacobian','on','DerivativeCheck','off');
-[x,resnorm,residual,exitflag,output]=lsqnonlin(costfun,init_z,[],[],options);
+% options = optimset('Display','iter-detailed','maxIter',200,...
+%     'Jacobian','on','JacobMult',@jacobMultFnc,'JacobPattern',jacobianPattern);
+options = optimset('Display','iter-detailed','maxIter',10,...
+    'Jacobian','on'); %,'Algorithm','levenberg-marquardt'
+options = optimset('Display','iter-detailed','maxIter',max_iter,...
+    'JacobPattern',jacobianPattern); %,'Algorithm','levenberg-marquardt'
+
 [z,fval]=lsqnonlin(costfun,init_z,[],[],options);
 % zend = z(end);
 % z = z(1:end-1)/z(end);
@@ -164,7 +168,36 @@ depth = NaN(size(N_ref_in));
 depth(face_inds) = z;
 offset = mean(depth(inface_inds)) - mean(z_ref(inface_inds));
 depth = depth-offset;
-depth(~in_face) = NaN;
+depth(~face) = NaN;
+
+
+z_gndd = z_gnd(face);
+
+cost_ref = costfun(init_z).^2;
+cost_est = costfun(z).^2;
+cost_gt= costfun(z_gndd).^2;
+
+s_data = 1;
+e_data = numel(xp);
+s_bnd = e_data+1;
+e_bnd = s_bnd-1 + numel(xp_bound);
+s_reg = e_bnd+1;
+e_reg = numel(cost_ref);
+figure;
+subplot(2,1,1);
+plot(s_data:e_data,cost_ref(s_data:e_data),...
+    s_bnd:e_bnd,cost_ref(s_bnd:e_bnd),...
+    s_reg:e_reg,cost_ref(s_reg:e_reg));
+title('Reference cost')
+subplot(2,1,2);
+plot(s_data:e_data,cost_est(s_data:e_data),...
+    s_bnd:e_bnd,cost_est(s_bnd:e_bnd),...
+    s_reg:e_reg,cost_est(s_reg:e_reg));
+title('Optimized cost');
+figure;
+plot(s_data:e_data,cost_gt(s_data:e_data),...
+    s_bnd:e_bnd,cost_gt(s_bnd:e_bnd),...
+    s_reg:e_reg,cost_gt(s_reg:e_reg));
 % % figure; surf(depth,'edgealpha',0);
 % 
 % if nargin>7
