@@ -22,7 +22,7 @@ A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
 Rpose = makehgtform('yrotate',deg2rad(0));
 [im,im_c,z_gt]=read_render_USF(impath,Rpose,[200 200]);
 [n_gt,N_gnd]=normal_from_depth(z_gt);
-im_c = render_model_noGL(n_gt,sh_coeff/2,im_c,0);
+im_c = render_model_noGL(n_gt,sh_coeff/2,im_c*0+1,0);
 im = rgb2gray(im_c);
 %% Run face tracker
 landmarks = stasm_tracker(im,talk);
@@ -33,8 +33,8 @@ if isempty(landmarks)
 end
 
 %% no texture version
-% im_c = render_model_noGL(n_gt,sh_coeff/2,im_c*0+1,0);
-% im = im_c(:,:,1);
+% % im_c = render_model_noGL(n_gt,sh_coeff,im_c,0);
+% % im = im_c(:,:,1);
 % im = rgb2gray(im_c);
 
 %% Compute pose
@@ -53,7 +53,7 @@ N_ref(isnan(im))=nan;
 N_gnd(isnan(N_ref))=NaN;
 n_ref((isnan(repmat(im,1,1,3)))) = nan;
 
-% alb_ref = alb_ref*0+1;
+alb_ref = alb_ref*0+1;
 % alb_ref = dmap_ref*0+1;
 
 %% estimate lighting
@@ -115,12 +115,14 @@ title(sprintf('Ambient, non-linear\n A: %.0f, E: %.0f',A_est_amb_nonlin,E_est_am
 % n_ref = n_gt;
 % dmap_ref = z_gt-max(z_gt(:));
 talk = 1;
+l_est_nonamb_lin = l_est_nonamb_lin;
 l_est_nonamb_lin = sh_coeff/2;
+
 N_ref_cur = N_ref;
 
 for j = 1:1
 %     depth = estimate_depth(N_ref_cur,alb_ref,im,dmap_ref,l_est,30,'laplac');
-    depth = estimate_depth_nonlin(N_ref_cur,alb_ref,im,dmap_ref,l_est_nonamb_lin,0,200,'laplac',z_gt);
+    depth = estimate_depth_nonlin(N_ref_cur,alb_ref,im,dmap_ref,l_est_nonamb_lin,1,100,'laplac',z_gt);
     
     [ ~,N_ref2 ] = normal_from_depth( depth );
         N_ref_cur = (N_ref_cur+N_ref2)/2;
@@ -139,9 +141,9 @@ target = im;
 target(isnan(N_ref))= 0;
 subplot(1,3,1);imshow(target)
 title('Target Image')
-subplot(1,3,2);imshow(render_model_noGL(n_ref,sh_coeff/2,im_c*0+1,0))
+subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin,alb_ref,0))
 title('Reference')
-subplot(1,3,3);imshow(render_model_noGL(n_new,sh_coeff/2,im_c*0+1,0))
+subplot(1,3,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin,alb_ref,0))
 title('Rendered')
 offset = mean(depth(~(isnan(depth) | isnan(z_gt) )))-mean(z_gt(~(isnan(depth) | isnan(z_gt))));
 depth2 = depth - offset;

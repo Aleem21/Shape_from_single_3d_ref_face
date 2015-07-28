@@ -24,8 +24,8 @@ ncy(~b_out_full) = NaN;
 face_inds = sub2ind(size(im),r_face,c_face);
 face_inds2d = nan(size(face));
 face_inds2d(face) = face_inds;
-ncx = -0.01*ncx(b_out_full);
-ncy = -0.01*ncy(b_out_full);
+ncx = -ncx(b_out_full);
+ncy = -ncy(b_out_full);
 I = im(face_inds);
 rho_ref = alb_ref(face_inds);
 N_ref = N_ref_in(face_inds);
@@ -156,8 +156,8 @@ init_z = z_ref(face);
 % options = optimset('Display','iter-detailed','maxIter',100,'JacobPattern',jacobianPattern);
 % options = optimset('Display','iter-detailed','maxIter',200,...
 %     'Jacobian','on','JacobMult',@jacobMultFnc,'JacobPattern',jacobianPattern);
-options = optimset('Display','iter-detailed','maxIter',10,...
-    'Jacobian','on'); %,'Algorithm','levenberg-marquardt'
+% options = optimset('Display','iter-detailed','maxIter',max_iter,...
+%     'Jacobian','on'); %,'Algorithm','levenberg-marquardt'
 options = optimset('Display','iter-detailed','maxIter',max_iter,...
     'JacobPattern',jacobianPattern); %,'Algorithm','levenberg-marquardt'
 
