@@ -33,8 +33,8 @@ if isempty(landmarks)
 end
 
 %% no texture version
-im_c = render_model_noGL(n_gt,sh_coeff/2,im_c*0+1,0);
-im = im_c(:,:,1);
+% im_c = render_model_noGL(n_gt,sh_coeff/2,im_c*0+1,0);
+% im = im_c(:,:,1);
 % im = rgb2gray(im_c);
 
 %% Compute pose
@@ -53,7 +53,7 @@ N_ref(isnan(im))=nan;
 N_gnd(isnan(N_ref))=NaN;
 n_ref((isnan(repmat(im,1,1,3)))) = nan;
 
-alb_ref = alb_ref*0+1;
+% alb_ref = alb_ref*0+1;
 % alb_ref = dmap_ref*0+1;
 
 %% estimate lighting
@@ -120,7 +120,7 @@ N_ref_cur = N_ref;
 
 for j = 1:1
 %     depth = estimate_depth(N_ref_cur,alb_ref,im,dmap_ref,l_est,30,'laplac');
-    depth = estimate_depth_nonlin(N_ref_cur,alb_ref,im,dmap_ref,l_est_nonamb_lin,1,200,'laplac',z_gt);
+    depth = estimate_depth_nonlin(N_ref_cur,alb_ref,im,dmap_ref,l_est_nonamb_lin,0,200,'laplac',z_gt);
     
     [ ~,N_ref2 ] = normal_from_depth( depth );
         N_ref_cur = (N_ref_cur+N_ref2)/2;

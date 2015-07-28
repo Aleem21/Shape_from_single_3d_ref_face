@@ -4,7 +4,7 @@ function [ cost, jacobian] = depth_cost_nonlin( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_r
 %% data cost
 p = z(i_p(:,1))-z(i_p(:,2));
 q = z(i_q(:,1))-z(i_q(:,2));
-cost_data = rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4))-im;
+cost_data = max(rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4)),0)-im;
 
 %% boundary conditions
 cost_bound = (z(i_bx(:,1))-z(i_bx(:,2))).*ncx + (z(i_by(:,1))-z(i_by(:,2))).*ncy;
