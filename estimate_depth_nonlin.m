@@ -153,7 +153,10 @@ im(in_face),rhs_reg,sh_coeff,alb_ref(in_face),gaussVec);
 %     ncx,ncy,iz_reg,...
 %     im(in_face),rhs_reg,sh_coeff,alb_ref(in_face),gaussVec);
 init_z = z_ref(face);
-options = optimset('Display','iter-detailed','maxIter',100,'JacobPattern',jacobianPattern);
+% options = optimset('Display','iter-detailed','maxIter',100,'JacobPattern',jacobianPattern);
+options = optimset('Display','iter-detailed','maxIter',3,...
+    'Jacobian','on','DerivativeCheck','off');
+[x,resnorm,residual,exitflag,output]=lsqnonlin(costfun,init_z,[],[],options);
 [z,fval]=lsqnonlin(costfun,init_z,[],[],options);
 % zend = z(end);
 % z = z(1:end-1)/z(end);
