@@ -1,10 +1,12 @@
-function [ cost, jacobian] = depth_cost_nonlin( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,l,rho,gaussVec,type,i_bound,val_bound)
+function [ cost, jacobian] = depth_cost_nonlin( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,l,rho,gaussVec,type,i_bound,val_bound,is_face)
 %DEPTH_COST_NONLIL Summary of this function goes here
 %   Detailed explanation goes here
 %% data cost
 p = z(i_p(:,1))-z(i_p(:,2));
 q = z(i_q(:,1))-z(i_q(:,2));
-cost_data = rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4))-im;
+dark_factor = ones(size(im));
+% dark_factor(rho<0.02) = 0;
+cost_data = (rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4))-im).*dark_factor;
 
 %% boundary conditions
 if type==1
@@ -29,7 +31,7 @@ if nargout >1
     % data term
     constNumber1 = repmat(1:size(i_p,1),3,1)';
     data_rhs = repmat(rho./(d2.^1.5),1,3).*...
-        [l(2).*d2-n.*p -(l(2)+l(3)).*d2+n.*(p+q) l(3).*d2-n.*q];
+        [l(2).*d2-n.*p -(l(2)+l(3)).*d2+n.*(p+q) l(3).*d2-n.*q].*repmat(dark_factor,1,3);
     
     % boundary condition
     

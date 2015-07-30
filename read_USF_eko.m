@@ -1,6 +1,5 @@
 function [ pts,tri,rgb,x,y,z,spherical,im_mean ] = read_USF_eko( echo_path,r,c,talk )
 %READ_USF_EKO path can be an echo file path or a whole directory for batch
-
 if nargin<4
     talk = 0;
 end
@@ -9,35 +8,47 @@ if strcmp(echo_path(end-3:end),'.eko')
     [spherical_mean,r,c] = find_USF_spherical(echo_path);
     im_mean = find_USF_im(echo_path);
 else
-    count = 1;
-    echo_paths = getAllFiles(echo_path,1);
-    spherical_mean = zeros(r,c);
-    im_mean = uint8(zeros(r,c,3));
-    for i=1:numel(echo_paths)
-        echo_path = echo_paths{i};
-        if ~strcmp(echo_path(end-3:end),'.eko')
-            continue;
+    try
+        if echo_path(end)~='/' || echo_path(end)~='\'
+            echo_path(end+1)='\';
         end
-        prev_num = num2str(str2num(echo_path(end-5:end-4))-1);
-        prev_name = [echo_path(1:end-6) prev_num '.eko'];
-        if (i-4)<1
-            continue
+        echo_path_in = echo_path;
+        im_mean = imread([echo_path 'ref_albedo.bmp']);
+        load([echo_path_in 'ref_depth.mat']);
+    catch
+        count = 1;
+        echo_paths = getAllFiles(echo_path,1);
+        spherical_mean = zeros(r,c);
+        im_mean = uint8(zeros(r,c,3));
+        for i=1:numel(echo_paths)
+            echo_path = echo_paths{i};
+            if ~strcmp(echo_path(end-3:end),'.eko')
+                continue;
+            end
+            prev_num = num2str(str2num(echo_path(end-5:end-4))-1);
+            prev_name = [echo_path(1:end-6) prev_num '.eko'];
+            if (i-4)<1
+                continue
+            end
+            if ~strcmp(echo_paths{i-4},prev_name)
+                continue
+            end
+            [spherical,r,c] = find_USF_spherical(echo_path);
+            spherical_mean = spherical_mean + (spherical-spherical_mean)/count;
+            im = find_USF_im(echo_path);
+            im_mean = im_mean + (im-im_mean)/count;
+            count = count + 1;
+            %         figure(f);
+            %         imshow(im_mean)
+            %         pause(0.0001);
         end
-        if ~strcmp(echo_paths{i-4},prev_name)
-            continue
+        if talk
+            fprintf('Models used: %d\n', count-1)
         end
-        [spherical,r,c] = find_USF_spherical(echo_path);
-        spherical_mean = spherical_mean + (spherical-spherical_mean)/count;
-        im = find_USF_im(echo_path);
-        im_mean = im_mean + (im-im_mean)/count;
-        count = count + 1;
-        %         figure(f);
-        %         imshow(im_mean)
-        %         pause(0.0001);
+        imwrite(im_mean,[echo_path_in 'ref_albedo.bmp']);
+        save([echo_path_in 'ref_depth'],'spherical_mean');
     end
-    if talk
-        fprintf('Models used: %d\n', count-1)
-    end
+    
 end
 %% convert spherical to cartesian coordinated
 [x,y,z] = spherical_to_cart_USF( spherical_mean,r,c );

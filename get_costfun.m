@@ -1,4 +1,4 @@
-function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_costfun( z_ref, im,alb_ref, sh_coeff, lambda1,type)
+function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_costfun( z_ref, im,alb_ref, sh_coeff, lambda1,lambda_bound,type)
 %GET_COSTFUN Summary of this function goes here
 %   Detailed explanation goes here
 %% Pre processing
@@ -17,8 +17,8 @@ ncy_in(~b_in_full) = NaN;
 
 
 if type==2
-    ncx = -ncx;
-    ncy = -ncy;
+    ncx = -lambda_bound*ncx;
+    ncy = -lambda_bound*ncy;
     ncx(b_in_full) = -ncx_in(b_in_full);
     ncy(b_in_full) = -ncy_in(b_in_full);
 else
@@ -155,7 +155,7 @@ else
     costfun=@(z)depth_cost_nonlin(z,[xp xn],[yp yn],...
     [],[],...
     ncx,ncy,iz_reg,...
-    im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,i_bound,val_bound);
+    im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,i_bound,val_bound,in_face);
 
 end
 nData = numel(xp);
