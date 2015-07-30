@@ -1,11 +1,10 @@
-function [ cost, jacobian] = depth_cost_nonlin( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,l,rho,gaussVec,type,i_bound,val_bound,is_face)
+function [ cost, jacobian] = depth_cost_nonlin( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,l,rho,gaussVec,type,eye_mask,i_bound,val_bound,is_face)
 %DEPTH_COST_NONLIL Summary of this function goes here
 %   Detailed explanation goes here
 %% data cost
 p = z(i_p(:,1))-z(i_p(:,2));
 q = z(i_q(:,1))-z(i_q(:,2));
-dark_factor = ones(size(im));
-% dark_factor(rho<0.02) = 0;
+dark_factor = eye_mask;
 cost_data = (rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4))-im).*dark_factor;
 
 %% boundary conditions

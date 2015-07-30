@@ -1,4 +1,4 @@
-function [ pts,tri,rgb,x,y,z,spherical,im_mean ] = read_USF_eko( echo_path,r,c,talk )
+function [ pts,tri,rgb,x,y,z,spherical,im_mean,eyes_rgb ] = read_USF_eko( echo_path,r,c,talk )
 %READ_USF_EKO path can be an echo file path or a whole directory for batch
 if nargin<4
     talk = 0;
@@ -48,8 +48,10 @@ else
         imwrite(im_mean,[echo_path_in 'ref_albedo.bmp']);
         save([echo_path_in 'ref_depth'],'spherical_mean');
     end
+    spherical = [];
     
 end
+
 %% convert spherical to cartesian coordinated
 [x,y,z] = spherical_to_cart_USF( spherical_mean,r,c );
 %% clip to valid region only
@@ -72,6 +74,8 @@ z = pts(3,:);
 
 
 %% generate triangulation and rgb
+eyes_rgb = (im2double(imread('D:\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\eyes_mask.bmp')));
+eyes_rgb = (reshape(eyes_rgb,size(pts,2),3)');
 pts = [x;y;z];
 rgb = (reshape(im_mean,size(pts,2),3)');
 

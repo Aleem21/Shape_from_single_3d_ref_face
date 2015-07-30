@@ -1,4 +1,4 @@
-function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_costfun( z_ref, im,alb_ref, sh_coeff, lambda1,lambda_bound,type)
+function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_costfun( z_ref, im,alb_ref, sh_coeff, eye_mask,lambda1,lambda_bound,type)
 %GET_COSTFUN Summary of this function goes here
 %   Detailed explanation goes here
 %% Pre processing
@@ -145,17 +145,17 @@ if nargout >2
     jacobianPattern(sub2ind([nR nC],constNumber,...
         iz_reg)) = 1;
 end
-
+% get eye map
 if type==1
     costfun=@(z)depth_cost_nonlin(z,[xp xn],[yp yn],...
         [xp_bound xn_bound],[yp_bound yn_bound],...
         ncx,ncy,iz_reg,...
-        im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type);
+        im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,eye_mask(in_face));
 else
     costfun=@(z)depth_cost_nonlin(z,[xp xn],[yp yn],...
     [],[],...
     ncx,ncy,iz_reg,...
-    im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,i_bound,val_bound,in_face);
+    im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,eye_mask(in_face),i_bound,val_bound,in_face);
 
 end
 nData = numel(xp);

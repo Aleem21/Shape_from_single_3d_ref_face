@@ -4,10 +4,10 @@ import plot3D_helper.label_axis
 fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
-lambda1 = 0.1;
+lambda1 = 0.6;
 lambda_bound = 1;
 max_iter = 50;
-is_albedo = 0;
+is_albedo = 1;
 jack = 'on';
 boundary_type = 2;
 folder_path = '.\data\USF_images\';
@@ -60,7 +60,7 @@ for i=1:1
     % ply_path ='.\data\sphere.ply';
     cRes = size(im,2);
     rRes = size(im,1);
-    [dmap_ref, n_ref, N_ref, alb_ref] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,talk);
+    [dmap_ref, n_ref, N_ref, alb_ref,eye_mask] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,talk);
     % [dmap_ref, n_ref] = generate_ref_depthmap(ply_path,Scale, talk, 1000, 1000, Rpose,im);
     N_ref(isnan(im))=nan;
     N_gnd(isnan(N_ref))=NaN;
@@ -125,7 +125,8 @@ for i=1:1
         l_est_nonamb_lin = sh_coeff;
     end
     
-    depth = estimate_depth_nonlin(alb_ref,im,dmap_ref,l_est_nonamb_lin,lambda1,lambda_bound,max_iter,boundary_type,jack,z_gt);
+    depth = estimate_depth_nonlin(alb_ref,im,dmap_ref,l_est_nonamb_lin,...
+        lambda1,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt);
     figure; surf(depth);axis equal
     [n_new,N_ref_new] =normal_from_depth( depth );
     p = n_ref(:,:,1).*N_ref;
@@ -135,11 +136,13 @@ for i=1:1
     figure;
     target = im;
     target(isnan(N_ref))= 0;
-    subplot(1,3,1);imshow(target)
+    im_target = render_model_noGL(n_gt,l_est_nonamb_lin/2,alb_ref*0+1,0);
+    im_target(isnan(N_ref))= 0;
+    subplot(1,3,1);imshow(im_target)
     title('Target Image')
-    subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin,alb_ref,0))
+    subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin/2,alb_ref*0+1,0))
     title('Reference')
-    subplot(1,3,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin,alb_ref,0))
+    subplot(1,3,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin/2,alb_ref*0+1,0))
     title('Rendered')
     offset = mean(depth(~(isnan(depth) | isnan(z_gt) )))-mean(z_gt(~(isnan(depth) | isnan(z_gt))));
     depth2 = depth - offset;
