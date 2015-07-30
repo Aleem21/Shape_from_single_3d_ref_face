@@ -15,12 +15,12 @@ count = 1;
 for i=1:1
     impath = [folder_path impaths{i}];
 %% make image
-sh_coeff = [0 0.5 0 -1.3];
+sh_coeff = [0 0.5 0.5 -1.3];
 x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
 A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
 
 Rpose = makehgtform('yrotate',deg2rad(0));
-[im,im_c,z_gt]=read_render_USF(impath,Rpose,[300 300]);
+[im,im_c,z_gt]=read_render_USF(impath,Rpose,[200 200]);
 [n_gt,N_gnd]=normal_from_depth(z_gt);
 im_c = render_model_noGL(n_gt,sh_coeff/2,im_c*0+1,0);
 im = rgb2gray(im_c);
@@ -124,7 +124,7 @@ N_ref_cur = N_ref;
 
 for j = 1:1
 %     depth = estimate_depth(N_ref_cur,alb_ref,im,dmap_ref,l_est,30,'laplac');
-    depth = estimate_depth_nonlin(alb_ref,im,dmap_ref,l_est_nonamb_lin,10,50,z_gt);
+    depth = estimate_depth_nonlin(alb_ref,im,dmap_ref,l_est_nonamb_lin,1,100,z_gt);
     
     [ ~,N_ref2 ] = normal_from_depth( depth );
         N_ref_cur = (N_ref_cur+N_ref2)/2;

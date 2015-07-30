@@ -1,7 +1,6 @@
-function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_costfun( z_ref, im,alb_ref, sh_coeff, lambda1)
+function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_costfun( z_ref, im,alb_ref, sh_coeff, lambda1,type)
 %GET_COSTFUN Summary of this function goes here
 %   Detailed explanation goes here
-
 %% Pre processing
 [ face,face_inds, inface_inds,in_face,r_face,c_face,r_inface,c_inface,...
     b_out_full,b_in_full ] = preprocess_estimate_depth( z_ref );
@@ -16,8 +15,17 @@ ncy(~b_out_full) = NaN;
 ncx_in(~b_in_full) = NaN;
 ncy_in(~b_in_full) = NaN;
 
-ncx = -ncx(b_out_full);
-ncy = -ncy(b_out_full);
+
+if type==2
+    ncx = -ncx;
+    ncy = -ncy;
+    ncx(b_in_full) = -ncx_in(b_in_full);
+    ncy(b_in_full) = -ncy_in(b_in_full);
+else
+    ncx = -ncx(b_out_full);
+    ncy = -ncy(b_out_full);
+end
+
 rho_ref = alb_ref(in_face);
 
 % r,c to index number in face Z's
@@ -41,35 +49,55 @@ yn_bound = zeros(num_boundaries,1);
 xp_bound = zeros(num_boundaries,1);
 xn_bound = zeros(num_boundaries,1);
 for i=1:num_boundaries
-    if (r_bound(i)-1)<1 || ~face(r_bound(i)-1,c_bound(i))
-        %if up is not accesable
-        neg = sub2ind_face(r_bound(i)+1,c_bound(i));          %down
-        pos = sub2ind_face(r_bound(i),c_bound(i));          %me
-        % else subtract current entry from next one
+    if type==1
+        [xp_bound(i), xn_bound(i), yp_bound(i), yn_bound(i) ] ...
+            = find_grad_inds_boundary(r_bound(i),c_bound(i),face,sub2ind_face,[-1,-1]);
     else
-        neg = sub2ind_face(r_bound(i),c_bound(i));          %me
-        pos = sub2ind_face(r_bound(i)-1,c_bound(i));        %up
+        r = r_bound(i);
+        c = c_bound(i);
+        
+        [xp_x_y, xn_x_y, yp_x_y, yn_x_y,pref_v ] ...
+            = find_grad_inds_boundary(r,c,face,sub2ind_face,[1,1]);
+        [xp_xp_y, xn_xp_y, yp_xp_y, yn_xp_y ] ...
+            = find_grad_inds_boundary(r,c-pref_v(1),face,sub2ind_face,pref_v);
+        
+        [xp_x_yp, xn_x_yp, yp_x_yp, yn_x_yp ] ...
+            = find_grad_inds_boundary(r-pref_v(2),c,face,sub2ind_face,pref_v);
+        nc = [ncx(r,c); ncy(r,c)];
+        nc_xp_y = [ncx(r,c-pref_v(1)); ncy(r,c-pref_v(1))]*0+nc;
+        nc_x_yp = [ncx(r-pref_v(2),c); ncy(r-pref_v(2),c)]*0+nc;
+        %         xn = c-pref_v(2);
+        %         yn = r-pref_v(1);
+        i_bound(i,:) = [   xp_xp_y     xn_xp_y ...
+            yp_xp_y     yn_xp_y ...
+            xp_x_y      xn_x_y  ...
+            yp_x_y      yn_x_y  ...
+            xp_x_yp     xn_x_yp ...
+            yp_x_yp     yn_x_yp ...
+            xp_x_y      xn_x_y  ...
+            yp_x_y      yn_x_y  ...
+            ];
+        val_bound(i,1:8) = [nc_xp_y(1)*nc(1) -nc_xp_y(1)*nc(1)...
+            nc_xp_y(2)*nc(1) -nc_xp_y(2)*nc(1)...
+            -nc(1)*nc(1)       nc(1)*nc(1)...
+            -nc(2)*nc(1)       nc(2)*nc(1)]*pref_v(1);
+        val_bound(i,9:16) =[nc_x_yp(1)*nc(2) -nc_x_yp(1)*nc(2)...
+            nc_x_yp(2)*nc(2) -nc_x_yp(2)*nc(2)...
+            -nc(1)*nc(2)       nc(1)*nc(2)...
+            -nc(2)*nc(2)       nc(2)*nc(2)]*pref_v(2);
+        
+        % if pref_v== 1  -> bellow are the +ve terms
+        % if pref_v==-1  -> bellow are the -ve terms
+        
+        
     end
-    yp_bound(i,1) = pos;
-    yn_bound(i,1) = neg;
-    
-    if (c_bound(i)-1)<1 || ~face(r_bound(i),c_bound(i)-1)
-        %if up is not accesable
-        neg = sub2ind_face(r_bound(i),c_bound(i)+1);          %right
-        pos = sub2ind_face(r_bound(i),c_bound(i));          %me
-        % else subtract current entry from next one
-    else
-        neg = sub2ind_face(r_bound(i),c_bound(i));          %left
-        pos = sub2ind_face(r_bound(i),c_bound(i)-1);        %up
-    end
-    
-    xp_bound(i,1) = pos;
-    xn_bound(i,1) = neg;
 end
 
 
 % regularization term
-in_inface = (in_face);
+% in_inface = (in_face-b_in_full);
+in_inface = in_face;
+
 [r_innface,c_innface] = find(in_inface);
 innface_inds = sub2ind(size(face),r_innface,c_innface);
 
@@ -102,9 +130,15 @@ if nargout >2
     jacobianPattern(sub2ind([nR nC],constNumber,[xp yp xn yn])) = 1;
     
     offset = numel(yn);
-    constNumber = repmat(1:numel(xp_bound),4,1)' + offset;
-    jacobianPattern(sub2ind([nR nC],constNumber,...
-        [xp_bound yp_bound xn_bound yn_bound])) = 1;
+    if type==1
+        constNumber = repmat(1:numel(xp_bound),4,1)' + offset;
+        jacobianPattern(sub2ind([nR nC],constNumber,...
+            [xp_bound yp_bound xn_bound yn_bound])) = 1;
+    else
+        constNumber = repmat(1:size(val_bound,1),16,1)' + offset;
+        jacobianPattern(sub2ind([nR nC],constNumber,...
+            i_bound)) = 1;
+    end
     
     offset = offset + numel(xp_bound);
     constNumber = repmat(1:size(iz_reg,1),9,1)' + offset;
@@ -112,11 +146,18 @@ if nargout >2
         iz_reg)) = 1;
 end
 
-costfun=@(z)depth_cost_nonlin(z,[xp xn],[yp yn],...
-    [xp_bound xn_bound],[yp_bound yn_bound],...
+if type==1
+    costfun=@(z)depth_cost_nonlin(z,[xp xn],[yp yn],...
+        [xp_bound xn_bound],[yp_bound yn_bound],...
+        ncx,ncy,iz_reg,...
+        im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type);
+else
+    costfun=@(z)depth_cost_nonlin(z,[xp xn],[yp yn],...
+    [],[],...
     ncx,ncy,iz_reg,...
-    im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec);
+    im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,i_bound,val_bound);
 
+end
 nData = numel(xp);
 nBound = numel(xp_bound);
 nReg = size(iz_reg,1);

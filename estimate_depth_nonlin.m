@@ -15,18 +15,20 @@ end
 
 %% Optimization
 [ costfun, is_face,nData,nBound,nReg,jacobianPattern ]...
-    = get_costfun( z_ref, im, alb_ref, sh_coeff, lambda1);
+    = get_costfun( z_ref, im, alb_ref, sh_coeff, lambda1,2);
 
 init_z = z_ref(is_face);
 % options = optimset('Display','iter-detailed','maxIter',100,'JacobPattern',jacobianPattern);
 % options = optimset('Display','iter-detailed','maxIter',200,...
 %     'Jacobian','on','JacobMult',@jacobMultFnc,'JacobPattern',jacobianPattern);
 % options = optimset('Display','iter-detailed','maxIter',max_iter,...
-%     'Jacobian','on'); %,'Algorithm','levenberg-marquardt'
+%     'Jacobian','on','Algorithm','levenberg-marquardt'); %
 options = optimset('Display','iter-detailed','maxIter',max_iter,...
     'JacobPattern',jacobianPattern); %,'Algorithm','levenberg-marquardt'
+% options = optimset('maxIter',1,'DerivativeCheck','on','Jacobian','on');
+% [z]=lsqnonlin(costfun,init_z,[],[],options);
 
-[z,fval]=lsqnonlin(costfun,init_z,[],[],options);
+[z,fval,residual,exitflag,output]=lsqnonlin(costfun,init_z,[],[],options);
 
 %% Post precessing
 depth = NaN(size(alb_ref));
@@ -42,7 +44,7 @@ if talk
     cost_ref = costfun(init_z).^2;
     cost_est = costfun(z).^2;
     if is_gnd
-        z_gndd = z_gnd(face);
+        z_gndd = z_gnd(is_face);
         cost_gt= costfun(z_gndd).^2;
     end
     
