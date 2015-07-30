@@ -1,4 +1,4 @@
-function [ depth ] = estimate_depth_nonlin( alb_ref, im, z_ref, sh_coeff,lambda1,max_iter,z_gnd,talk)
+function [ depth ] = estimate_depth_nonlin( alb_ref, im, z_ref, sh_coeff,lambda1,max_iter,bound_type,z_gnd,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
 if nargin <8
@@ -15,16 +15,16 @@ end
 
 %% Optimization
 [ costfun, is_face,nData,nBound,nReg,jacobianPattern ]...
-    = get_costfun( z_ref, im, alb_ref, sh_coeff, lambda1,2);
+    = get_costfun( z_ref, im, alb_ref, sh_coeff, lambda1,bound_type);
 
 init_z = z_ref(is_face);
 % options = optimset('Display','iter-detailed','maxIter',100,'JacobPattern',jacobianPattern);
 % options = optimset('Display','iter-detailed','maxIter',200,...
 %     'Jacobian','on','JacobMult',@jacobMultFnc,'JacobPattern',jacobianPattern);
-% options = optimset('Display','iter-detailed','maxIter',max_iter,...
-%     'Jacobian','on','Algorithm','levenberg-marquardt'); %
 options = optimset('Display','iter-detailed','maxIter',max_iter,...
-    'JacobPattern',jacobianPattern); %,'Algorithm','levenberg-marquardt'
+    'Jacobian','on');%,'Algorithm','levenberg-marquardt'); %
+% options = optimset('Display','iter-detailed','maxIter',max_iter,...
+%     'JacobPattern',jacobianPattern); %,'Algorithm','levenberg-marquardt'
 % options = optimset('maxIter',1,'DerivativeCheck','on','Jacobian','on');
 % [z]=lsqnonlin(costfun,init_z,[],[],options);
 

@@ -4,13 +4,16 @@ import plot3D_helper.label_axis
 fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
+lambda1 = 1;
+max_iter = 50;
+is_albedo = 0;
+boundary_type = 2;
 folder_path = '.\data\USF_images\';
 talk = 0;
 impaths = {'03721c15.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
-
 
 for i=1:1
     impath = [folder_path impaths{i}];
@@ -124,7 +127,7 @@ N_ref_cur = N_ref;
 
 for j = 1:1
 %     depth = estimate_depth(N_ref_cur,alb_ref,im,dmap_ref,l_est,30,'laplac');
-    depth = estimate_depth_nonlin(alb_ref,im,dmap_ref,l_est_nonamb_lin,1,100,z_gt);
+    depth = estimate_depth_nonlin(alb_ref,im,dmap_ref,l_est_nonamb_lin,lambda1,max_iter,boundary_type,z_gt);
     
     [ ~,N_ref2 ] = normal_from_depth( depth );
         N_ref_cur = (N_ref_cur+N_ref2)/2;
@@ -151,7 +154,9 @@ offset = mean(depth(~(isnan(depth) | isnan(z_gt) )))-mean(z_gt(~(isnan(depth) | 
 depth2 = depth - offset;
 figure;
 subplot(1,2,1)
-imagesc(depth2-z_gt);
+z_error = depth2-z_gt;
+z_error(isnan(z_error)) = 0;
+imagesc(z_error);
 title('z_{est}-z_{ground truth}')
 im_diff = alb_ref./N_ref_new.*(l_est_nonamb_lin(2)*p_new+l_est_nonamb_lin(3)*q_new-l_est_nonamb_lin(4))-im;
 im_diff(isnan(im_diff))=0;

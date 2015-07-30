@@ -56,7 +56,7 @@ if nargout >1
             bnd_rhs = [bnd_rhs; temp(:)];
             constNumber2 = [constNumber2; ones(numel(temp),1)*i];
         end
-        
+        constNumber2 = constNumber2 + offset;
         
         
         
@@ -64,7 +64,7 @@ if nargout >1
         
     end
     % reg term
-    offset2 = offset + size(i_bx,1);
+    offset2 = offset + numel(cost_bound);
     constNumber3 = repmat(1:size(iz_reg,1),9,1)' + offset2;
     reg_rhs = repmat(gaussVec',size(iz_reg,1),1);
     if type==1
