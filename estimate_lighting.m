@@ -24,6 +24,8 @@ if talk
     figure;imagesc(rad);
     title('Radiosity (image / albedo)')
 end
+im = im2double(im);
+
 
 a0 = pi;
 a1 = 2*pi/sqrt(3);

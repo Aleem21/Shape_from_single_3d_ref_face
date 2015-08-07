@@ -9,6 +9,6 @@ rendered(:,:,3) = b';
 rendered = rendered(end:-1:1,end:-1:1,:);
 z = z';
 z = z(end:-1:1,end:-1:1,:)*2-1;
-z = z*min([cRes rRes])/2;
+% z = z*min([cRes rRes])/2;
 end
 

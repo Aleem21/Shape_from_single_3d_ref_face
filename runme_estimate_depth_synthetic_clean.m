@@ -3,14 +3,14 @@ close all
 
 talk = 0;
 %% generate ref depth map
-sigma = 5 ;
+sigma = 10 ;
 scale = 1;
-[dmap_ref, n_ref, N_ref] = generate_ref_depthmap_synth_clean(100,sigma,scale,talk);
+[dmap_ref, n_ref, N_ref] = generate_ref_depthmap_synth_clean(200,sigma,scale,talk);
 
 %% generate ground truth depth map
-sigma = 5.5;
+sigma = 11;
 scale = 1;
-[dmap_gnd, n_gnd, N_gnd] = generate_ref_depthmap_synth_clean(100,sigma,scale,talk);
+[dmap_gnd, n_gnd, N_gnd] = generate_ref_depthmap_synth_clean(200,sigma,scale,talk);
 
 %% generate ref albedo
 alb_ref = ~isnan(N_ref);

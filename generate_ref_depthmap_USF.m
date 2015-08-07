@@ -1,4 +1,4 @@
-function [ depth_map, n, N_ref,albedo, eye_map,pts ] = generate_ref_depthmap_USF( Scale, Rpose, im,im_c, talk )
+function [ depth_map, n, N_ref,albedo, eye_map,scalez,pts ] = generate_ref_depthmap_USF( Scale, Rpose, im,im_c, talk )
 
 %GENERATE_REF_DEPTHMAP generated depthmap from reading the ply file of the
 %model, resolution of rows and columns specified by inputs
@@ -32,7 +32,8 @@ xrange = [1 size(im,2)];
 yrange = [1 size(im,1)]; 
 
 %% Generate reference pointcloud and texture map (albedo)
-[pts,tri,rgb,~,~,~,~,~,eye_rgb] = read_USF_eko('D:\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test',512,512,talk);
+black_eyes = 1;
+[pts,tri,rgb,~,~,~,~,~,eye_rgb] = read_USF_eko('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test',512,512,black_eyes,talk);
 %% data conditioning
 
 %pose correction
@@ -44,11 +45,13 @@ pts_rotated(3,:) = pts(3,:)*min(Scale);
 
 %% generate depth map by calling mex file
 [depth_map,albedo] = computer_depth_USF( pts_rotated,tri,rgb,xrange,yrange,im_c,talk );
+scalez = 1/9*1/min(Scale);
 albedo = im2double(rgb2gray(albedo));
 
 %% generate eyemap
 [~,eye_map] = computer_depth_USF( pts_rotated,tri,eye_rgb,xrange,yrange,im_c,talk );
 eye_map = double(eye_map(:,:,1)~=1);
+% eye_map(eye_map==0) = 0.1;
 %% draw depth map
 if talk >0
     figure; imagesc(depth_map)

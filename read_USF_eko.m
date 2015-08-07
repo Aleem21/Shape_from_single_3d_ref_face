@@ -1,7 +1,10 @@
-function [ pts,tri,rgb,x,y,z,spherical,im_mean,eyes_rgb ] = read_USF_eko( echo_path,r,c,talk )
+function [ pts,tri,rgb,x,y,z,spherical,im_mean,eyes_rgb ] = read_USF_eko( echo_path,r,c,black_eyes,talk )
 %READ_USF_EKO path can be an echo file path or a whole directory for batch
-if nargin<4
+if nargin<5
     talk = 0;
+end
+if nargin <4
+    black_eyes = 0;
 end
 % f = figure;
 if strcmp(echo_path(end-3:end),'.eko')
@@ -55,7 +58,7 @@ end
 %% convert spherical to cartesian coordinated
 [x,y,z] = spherical_to_cart_USF( spherical_mean,r,c );
 %% clip to valid region only
-valid_region = im2double(imread('D:\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\range2.bmp'));
+valid_region = im2double(imread('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\range2.bmp'));
 valid_region(valid_region==0) = NaN;
 im_mean = im2double(im_mean).*repmat(double(valid_region(end:-1:1,:)),1,1,3);
 
@@ -67,14 +70,19 @@ end
 
 %% output conditioning
 offset = min(x(:));
-pts = [ y(:)/0.6e4 z(:)/0.6e4 (x(:)-offset)/0.6e4 ]';
+pts = [ y(:)*9 z(:)*9 (x(:)-offset)*9]';
 x = pts(1,:);
 y = pts(2,:);
 z = pts(3,:);
 
 
 %% generate triangulation and rgb
-eyes_rgb = (im2double(imread('D:\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\eyes_mask.bmp')));
+if black_eyes
+    eyes_small_rgb = double((im2double(imread('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\eyes_small_mask.bmp')))~=1);
+    eyes_small_rgb(eyes_small_rgb==0) = 0.2;
+    im_mean = im_mean .* eyes_small_rgb;
+end
+eyes_rgb = (im2double(imread('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\eyes_mask.bmp')));
 eyes_rgb = (reshape(eyes_rgb,size(pts,2),3)');
 pts = [x;y;z];
 rgb = (reshape(im_mean,size(pts,2),3)');

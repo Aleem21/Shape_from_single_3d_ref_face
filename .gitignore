@@ -47,4 +47,10 @@ Temporary Items
 
 # data directory
 data/
-Meetings/
+
+# external library (Black's code)
+black/
+
+
+# Movies for report
+*.mp4

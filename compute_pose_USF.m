@@ -6,11 +6,14 @@ end
 if nargin < 4
     restrictive = 0;
 end
-[pts,tri,rgb] = read_USF_eko('D:\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test',512,512);
-[rendered,z] = render_rgb_USF(pts,tri,rgb,1000,1000);
+[pts,tri,rgb] = read_USF_eko('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test',512,512);
+cRes = 1000;
+rRes = 1000;
+[rendered,z] = render_rgb_USF(pts,tri,rgb,rRes,cRes);
+z = double(z)*min(rRes,cRes)/2;
 landmarks = stasm_tracker(rendered,talk);
 valid = 17:77;
-landmarks_3D = px_to_3d_USF(landmarks(:,valid),z,1000,1000,0.6e4);
+landmarks_3D = px_to_3d_USF(landmarks(:,valid),z,1000,1000);
 pp = pp(:,valid);
 
 %% data conditioning

@@ -16,7 +16,7 @@ pts(3,:) = (pts(3,:)-minz)/(maxz-minz)*2-1;
 rRes = yrange(2);
 cRes = xrange(2);
 [rendered,z] = render_rgb_USF( pts,tri,rgb,rRes,cRes);
-z = double(z);
+z = (double(z)+1)/2*(maxz-minz)+minz;
 
 if talk
     if size(im_c,3)==1
@@ -29,5 +29,6 @@ if talk
     im_merge(rendered2>0) = im_merge(rendered2>0)/5 + rendered2(rendered2>0)/5*4;
     figure;imshow(im_merge)
 end
+
 end
 

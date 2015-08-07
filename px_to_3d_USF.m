@@ -1,4 +1,4 @@
-function [ pts3D ] = px_to_3d_USF( pts2D,depthmap,cRes,rRes,factor,z_offset )
+function [ pts3D ] = px_to_3d_USF( pts2D,depthmap,cRes,rRes )
 %PX_TO_3D_USF Summary of this function goes here
 %   Detailed explanation goes here
 % pts has to be two(rows) by number of points(cols)
