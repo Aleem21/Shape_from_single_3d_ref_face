@@ -31,7 +31,7 @@ if size(im1,3)==1
     for i=numel(im1_pyr):-1:1
         uv = imresize(uv,[size(im1_pyr{i},1) size(im1_pyr{i},2)]);
         [x, y] = meshgrid(1:size(im1_pyr{i},2), 1:size(im1_pyr{i},1));
-
+        for j=1:5
         im1_cur  = interp2(im1_pyr{i}, x-uv(:,:,1), y-uv(:,:,2));
         im1_cur(isnan(im1_cur)) = im1_pyr{i}(isnan(im1_cur));
         figure(f1);imshow(im1_pyr{i})
@@ -40,6 +40,7 @@ if size(im1,3)==1
 
         uv_cur = flow.mex_LDOF(repmat(im1_cur,1,1,3)*255,repmat(im2_pyr{i},1,1,3)*255);
          uv = uv + uv_cur;
+        end
     end
 %     uv = flow.mex_LDOF(repmat(im1,1,1,3)*255,repmat(im2,1,1,3)*255);
 else
