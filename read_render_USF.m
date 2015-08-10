@@ -15,4 +15,3 @@ rendered = rgb2gray(rendered_c);
 z = double(z)*min(sz)/2;
 scales = [1/9 1/9 1/9];
 end
-
