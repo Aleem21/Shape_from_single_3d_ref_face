@@ -64,6 +64,7 @@ for i=1:1
     rRes = size(im,1);
     [dmap_ref, n_ref, N_ref, alb_ref,eye_mask,scalez] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,talk);
     % [dmap_ref, n_ref] = generate_ref_depthmap(ply_path,Scale, talk, 1000, 1000, Rpose,im);
+
     N_ref(isnan(im))=nan;
 %     N_gnd(isnan(N_ref))=NaN;
     n_ref((isnan(repmat(im,1,1,3)))) = nan;
@@ -122,11 +123,16 @@ for i=1:1
     imshow(c4_amb_nonlin/2)
     title(sprintf('Ambient, non-linear\n A: %.0f, E: %.0f',A_est_amb_nonlin,E_est_amb_nonlin));
 
-    
-    
+
     im_rendered = render_model_noGL(n_ref,l_est_nonamb_lin,alb_ref,0);
     if flow
-        [alb_ref,dmap_ref,eye_mask]=compute_flow(im,im_rendered,alb_ref,dmap_ref,eye_mask,1);
+        
+        n_levels = 10;
+        n_iters = 5;
+        morph = 0;
+        [alb_ref,dmap_ref,eye_mask]=compute_flow(im,im_rendered,...
+            landmarks,alb_ref,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
+        
     end
     talk = 1;
     if ~is_albedo
