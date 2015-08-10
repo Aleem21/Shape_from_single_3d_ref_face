@@ -6,14 +6,14 @@ fusion_path = '.\data\fusion.jpg';
 %% set initial variables
 lambda1 = 0.5;
 lambda_bound = 1;
-max_iter = 50;
+max_iter = 40;
 is_albedo = 1;
 jack = 'off';
 boundary_type = 2;
 flow = 1;
 folder_path = '.\data\USF_images\';
 talk = 0;
-impaths = {'03600c34.eko'};
+impaths = {'03643c18.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
@@ -21,7 +21,7 @@ count = 1;
 for i=1:1
     impath = [folder_path impaths{i}];
     %% make image
-    sh_coeff = [0 0.6 0.5 -1.3];
+    sh_coeff = [1 0.3 0.2 -1.3];
     x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
     A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
     
@@ -137,7 +137,7 @@ for i=1:1
         lambda1,lambda_bound,max_iter,boundary_type,jack,eye_mask);
     
     
-    figure; depth_s=surf(depth,im,'edgealpha',0,'facecolor','interp');axis equal
+    figure; depth_s=surf(depth,im_c,'edgealpha',0,'facecolor','interp');axis equal
     colormap 'gray';
     phong.shading(depth_s);
     [n_new,N_ref_new] =normal_from_depth( depth );
