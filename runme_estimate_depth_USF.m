@@ -54,7 +54,7 @@ for i=1:1
     
     %% Compute pose
     restrictive = 0;
-    [Rpose, Scale,~,landmarks_ref] = compute_pose_USF(landmarks, talk, im,restrictive);
+    [Rpose, Scale] = compute_pose_USF(landmarks, talk, im,restrictive);
     
     % Rpose = Rpose/R;
     %% generate ref depth map

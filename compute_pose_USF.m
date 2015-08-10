@@ -1,4 +1,4 @@
-function [ sRT,S,sT,landmarks_ref ] = compute_pose_USF( pp,talk,im,restrictive)
+function [ sRT,S,sT ] = compute_pose_USF( pp,talk,im,restrictive)
 
 if nargin<2
     talk = 0;

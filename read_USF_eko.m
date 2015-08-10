@@ -19,28 +19,33 @@ else
         im_mean = imread([echo_path 'ref_albedo.bmp']);
         load([echo_path_in 'ref_depth.mat']);
     catch
-        count = 1;
+        count = ones(r,c);
         echo_paths = getAllFiles(echo_path,1);
         spherical_mean = zeros(r,c);
         im_mean = uint8(zeros(r,c,3));
         for i=1:numel(echo_paths)
-            echo_path = echo_paths{i};
-            if ~strcmp(echo_path(end-3:end),'.eko')
+            echo_path_i = echo_paths{i};
+            if ~strcmp(echo_path_i(end-3:end),'.eko')
                 continue;
             end
-            prev_num = num2str(str2num(echo_path(end-5:end-4))-1);
-            prev_name = [echo_path(1:end-6) prev_num '.eko'];
+            prev_num = num2str(str2num(echo_path_i(end-5:end-4))-1);
+            prev_name = [echo_path_i(1:end-6) prev_num '.eko'];
             if (i-4)<1
                 continue
             end
             if ~strcmp(echo_paths{i-4},prev_name)
                 continue
             end
-            [spherical,r,c] = find_USF_spherical(echo_path);
-            spherical_mean = spherical_mean + (spherical-spherical_mean)/count;
-            im = find_USF_im(echo_path);
-            im_mean = im_mean + (im-im_mean)/count;
-            count = count + 1;
+            [spherical,r,c] = find_USF_spherical(echo_path_i);
+            valid = ~isnan(spherical);
+            spherical_mean(valid) = ...
+                spherical_mean(valid) + ...
+                (spherical(valid)-spherical_mean(valid))...
+                ./count(valid);
+            im = find_USF_im(echo_path_i);
+            im_mean = im_mean + (im-im_mean)/max(count(:));
+            count(valid) = count(valid) + 1;
+
             %         figure(f);
             %         imshow(im_mean)
             %         pause(0.0001);
@@ -48,6 +53,7 @@ else
         if talk
             fprintf('Models used: %d\n', count-1)
         end
+        spherical_mean(count < (max(count(:)))/5 ) = NaN;
         imwrite(im_mean,[echo_path_in 'ref_albedo.bmp']);
         save([echo_path_in 'ref_depth'],'spherical_mean');
     end
