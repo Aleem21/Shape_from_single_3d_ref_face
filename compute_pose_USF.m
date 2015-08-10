@@ -11,9 +11,9 @@ cRes = 1000;
 rRes = 1000;
 [rendered,z] = render_rgb_USF(pts,tri,rgb,rRes,cRes);
 z = double(z)*min(rRes,cRes)/2;
-landmarks = stasm_tracker(rendered,talk);
+landmarks_ref = stasm_tracker(rendered,talk);
 valid = 17:77;
-landmarks_3D = px_to_3d_USF(landmarks(:,valid),z,1000,1000);
+landmarks_3D_ref = px_to_3d_USF(landmarks_ref(:,valid),z,1000,1000);
 pp = pp(:,valid);
 
 %% data conditioning
@@ -28,7 +28,7 @@ pp(2,:) = sz2 -pp(2,:);
 % Pp = [-0.3769    0.2345  -0.08995    -0.06465   -0.0228;
 %     0.1458    0.2297  -0.03936    -0.3102    -0.4931;
 %     0.5042    0.5717   0.8696      0.8524     0.8576];
-Pp = landmarks_3D;
+Pp = landmarks_3D_ref;
 Pp(1,:) = Pp(1,:);
 Pp(2,:) = Pp(2,:);
 %% Pose computation
@@ -50,7 +50,7 @@ if talk
         pts2(3,:) = pts(3,:)*min(S);
         figure;imshow(im); hold on
 %         plot(sz1-pts2(1,:),sz2-pts2(2,:),'.')
-        landmarks2 = sRT*[landmarks_3D ;ones(1,size(landmarks_3D,2))];
+        landmarks2 = sRT*[landmarks_3D_ref ;ones(1,size(landmarks_3D_ref,2))];
         plot(sz1-landmarks2(1,:),sz2-landmarks2(2,:),'or')
         plot(sz1-pp(1,:),sz2-pp(2,:),'.g')
         title('green: Target landmarks, red: reprojected 3D model landmarks')
