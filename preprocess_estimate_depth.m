@@ -8,6 +8,18 @@ face = ~isnan(z_ref);
 face = remove_bad_boundary(face)>0;
 
 
+% remove small blobs at edges, which arise due to flow correction. We only
+% leave the largest blob and remove all others
+CC = bwconncomp(face);
+for i=1:CC.NumObjects
+    list(i) = size(CC.PixelIdxList{i},1);
+end
+[~,sort_i] = sort(list,'descend');
+for i=2:numel(sort_i)
+    face(CC.PixelIdxList{sort_i(i)}) = 0;
+end
+
+
 % face inds
 [r_face,c_face] = find(face);
 face_inds = sub2ind(size(face),r_face,c_face);

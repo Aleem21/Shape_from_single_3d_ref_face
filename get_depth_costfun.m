@@ -1,4 +1,4 @@
-function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_costfun( z_ref, im,alb_ref, sh_coeff, eye_mask,lambda1,lambda_bound,type)
+function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_depth_costfun( z_ref, im,alb_ref, sh_coeff, eye_mask,lambda1,lambda_bound,type)
 %GET_COSTFUN Summary of this function goes here
 %   Detailed explanation goes here
 %% Pre processing

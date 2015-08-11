@@ -22,6 +22,10 @@ if morph
 %     figure; imshow(im1);
 %     figure; imshow(im2);
 %     figure; imshow(imgo);
+    o1 = MLSD2DWarp(o1,mlsd,q,X,Y);
+    o2 = MLSD2DWarp(o2,mlsd,q,X,Y);
+    o3 = MLSD2DWarp(o3,mlsd,q,X,Y);
+
     im1 = imgo;
     cd ..
 end
@@ -93,7 +97,6 @@ if talk
 %     subplot(1,2,2); plotflow(uv);   title('Vector plot');
 %     cd '..'
 end
-
 
 
 o1_out = interp2(o1, x-vx, y-vy);

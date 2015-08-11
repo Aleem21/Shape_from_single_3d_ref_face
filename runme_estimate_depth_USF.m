@@ -6,14 +6,14 @@ fusion_path = '.\data\fusion.jpg';
 %% set initial variables
 lambda1 = 0.5;
 lambda_bound = 1;
-max_iter = 40;
+max_iter = 50;
 is_albedo = 1;
-jack = 'off';
+jack = 'on';
 boundary_type = 2;
 flow = 1;
 folder_path = '.\data\USF_images\';
 talk = 0;
-impaths = {'03643c18.eko'};
+impaths = {'03600c34.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
@@ -21,7 +21,7 @@ count = 1;
 for i=1:1
     impath = [folder_path impaths{i}];
     %% make image
-    sh_coeff = [1 0.3 0.2 -1.3];
+    sh_coeff = [0 0.6 0.5 -1.3];
     x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
     A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
     
@@ -128,18 +128,18 @@ for i=1:1
     if flow
         
         n_levels = 10;
-        n_iters = 5;
-        morph = 0;
-        [alb_ref,dmap_ref,eye_mask]=compute_flow(im,im_rendered,...
+        n_iters = 1;
+        morph = 1;
+        [alb_ref2,dmap_ref,eye_mask]=compute_flow(im,im_rendered,...
             landmarks,alb_ref,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
-        
     end
     talk = 1;
     if ~is_albedo
         l_est_nonamb_lin = sh_coeff;
     end
-    
-    depth = estimate_depth_nonlin(alb_ref,im,dmap_ref,l_est_nonamb_lin,...
+    dmap_ref(isnan(im))=nan;
+%     im(isnan(im)) = 0;
+    depth = estimate_depth_nonlin(alb_ref2,im,dmap_ref,l_est_nonamb_lin,...
         lambda1,lambda_bound,max_iter,boundary_type,jack,eye_mask);
     
     
@@ -154,13 +154,13 @@ for i=1:1
     figure;
     target = im;
     target(isnan(N_ref))= 0;
-    im_target = render_model_noGL(n_gt,l_est_nonamb_lin/2,alb_ref*0+1,0);
+    im_target = render_model_noGL(n_gt,l_est_nonamb_lin/2,alb_ref2*0+1,0);
     im_target(isnan(N_ref))= 0;
     subplot(1,3,1);imshow(im_target)
     title('Target Image')
-    subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin/2,alb_ref*0+1,0))
+    subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin/2,alb_ref2*0+1,0))
     title('Reference')
-    subplot(1,3,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin/2,alb_ref*0+1,0))
+    subplot(1,3,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin/2,alb_ref2*0+1,0))
     title('Rendered')
     offset = mean(depth(~(isnan(depth) | isnan(z_gt) )))-mean(z_gt(~(isnan(depth) | isnan(z_gt))));
     depth2 = depth - offset;
@@ -170,7 +170,7 @@ for i=1:1
     z_error(isnan(z_error)) = 0;
     imagesc(abs(z_error));
     title('|z_{est}-z_{ground truth}| _{(cm)}')
-    im_diff = alb_ref./N_ref_new.*(l_est_nonamb_lin(2)*p_new+l_est_nonamb_lin(3)*q_new-l_est_nonamb_lin(4))-im;
+    im_diff = alb_ref2./N_ref_new.*(l_est_nonamb_lin(2)*p_new+l_est_nonamb_lin(3)*q_new-l_est_nonamb_lin(4))-im;
     im_diff(isnan(im_diff))=0;
     subplot(1,2,2);
     imagesc(abs(im_diff));
@@ -181,7 +181,8 @@ for i=1:1
     
     if mod(count,3)==0 && i<n
         f=figure;
-        count = 0;
+        count = 0;h
+        
     end
     count = count+1;
 end
