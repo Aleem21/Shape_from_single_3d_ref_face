@@ -39,9 +39,9 @@ xn = sub2ind_face(sub2ind(size(im),r_inface,c_inface));
 
 yp = sub2ind_face(sub2ind(size(im),r_inface-1,c_inface));
 yn = sub2ind_face(sub2ind(size(im),r_inface,c_inface));
-[r_bound,c_bound] = find(b_out_full);
 
 % boundary term
+[r_bound,c_bound] = find(b_out_full);
 num_boundaries = sum(b_out_full(:));
 yp_bound = zeros(num_boundaries,1);
 yn_bound = zeros(num_boundaries,1);
