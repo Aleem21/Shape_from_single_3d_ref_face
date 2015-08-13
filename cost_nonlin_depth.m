@@ -1,4 +1,4 @@
-function [ cost, jacobian] = depth_cost_nonlin( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,l,rho,gaussVec,type,eye_mask,i_bound,val_bound,is_face)
+function [ cost, jacobian] = cost_nonlin_depth( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,l,rho,gaussVec,type,eye_mask,i_bound,val_bound,is_face)
 %DEPTH_COST_NONLIL Summary of this function goes here
 %   Detailed explanation goes here
 %% data cost

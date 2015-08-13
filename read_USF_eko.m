@@ -85,7 +85,7 @@ z = pts(3,:);
 %% generate triangulation and rgb
 if black_eyes
     eyes_small_rgb = double((im2double(imread('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\eyes_small_mask.bmp')))~=1);
-    eyes_small_rgb(eyes_small_rgb==0) = 0.2;
+    eyes_small_rgb(eyes_small_rgb==0) = 0.5;
     im_mean = im_mean .* eyes_small_rgb;
 end
 eyes_rgb = (im2double(imread('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\eyes_mask.bmp')));
