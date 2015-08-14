@@ -171,8 +171,6 @@ for i=1:1
     phong.shading(depth_s);
     title('Ground truth')
     [n_new,N_ref_new] =normal_from_depth( depth );
-    p = n_ref(:,:,1).*N_ref;
-    q = n_ref(:,:,2).*N_ref;
     p_new = n_new(:,:,1).*N_ref_new;
     q_new = n_new(:,:,2).*N_ref_new;
     figure;
@@ -184,7 +182,7 @@ for i=1:1
     end
     subplot(1,3,1);imshow(im_target)
     title('Target Image')
-    subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin,alb_render,0))
+    subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin,alb_ref,0))
     title('Reference')
     subplot(1,3,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin,alb_render,0))
     title('Rendered')
