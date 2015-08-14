@@ -4,16 +4,18 @@ import plot3D_helper.label_axis
 fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
-lambda1 = 0.5;
+lambda1 = 50;
+lambda2 = 1;
 lambda_bound = 1;
 max_iter = 50;
 is_albedo = 1;
+is_alb_opt = 1;
 jack = 'on';
 boundary_type = 2;
 flow = 1;
 folder_path = '.\data\USF_images\';
 talk = 0;
-impaths = {'03600c34.eko'};
+impaths = {'03653c16.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
@@ -26,7 +28,13 @@ for i=1:1
     A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
     
     Rpose = makehgtform('yrotate',deg2rad(0));
-    [im,im_c,z_gt,scales]=read_render_USF(impath,Rpose,[200 200]);
+    [im,im_c,z_gt,scales]=read_render_USF(impath,Rpose,[240 240]);
+    alb_gt = im;
+    %     z_gt(:,[1:40 201:end]) = [];
+    %     z_gt(181:end,:) = [];
+    %     im_c(:,[1:40 201:end],:) = [];
+    %     im_c(:,201:end,:) = [];
+    %     im_c(181:end,:,:) = [];
     [n_gt,N_gnd]=normal_from_depth(z_gt);
     if ~is_albedo
         sh_coeff = sh_coeff/2;
@@ -34,7 +42,7 @@ for i=1:1
         im_c = im_c*0+1;
     end
     im_c = render_model_noGL(n_gt,sh_coeff,im_c,0);
-%     im_c = imresize(im2double(imread('.\data\l_test\scarlet.jpg')),0.3);
+    %     im_c = imresize(im2double(imread('.\data\l_test\scarlet.jpg')),0.3);
     im = rgb2gray(im_c);
     if ~is_albedo
         im = im_c(:,:,1);
@@ -64,9 +72,9 @@ for i=1:1
     rRes = size(im,1);
     [dmap_ref, n_ref, N_ref, alb_ref,eye_mask,scalez] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,talk);
     % [dmap_ref, n_ref] = generate_ref_depthmap(ply_path,Scale, talk, 1000, 1000, Rpose,im);
-
+    
     N_ref(isnan(im))=nan;
-%     N_gnd(isnan(N_ref))=NaN;
+    %     N_gnd(isnan(N_ref))=NaN;
     n_ref((isnan(repmat(im,1,1,3)))) = nan;
     dmap_ref(isnan(im))=nan;
     im(isnan(dmap_ref))=  nan;
@@ -75,6 +83,7 @@ for i=1:1
     end
     
     %% estimate lighting
+    
     is_ambient = 1;
     non_lin = 0;
     l_est_amb_lin = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin);
@@ -122,11 +131,10 @@ for i=1:1
     subplot(2,2,4)
     imshow(c4_amb_nonlin/2)
     title(sprintf('Ambient, non-linear\n A: %.0f, E: %.0f',A_est_amb_nonlin,E_est_amb_nonlin));
-
-
+    
+    
     im_rendered = render_model_noGL(n_ref,l_est_nonamb_lin,alb_ref,0);
     if flow
-        
         n_levels = 10;
         n_iters = 1;
         morph = 1;
@@ -138,29 +146,47 @@ for i=1:1
         l_est_nonamb_lin = sh_coeff;
     end
     dmap_ref(isnan(im))=nan;
-%     im(isnan(im)) = 0;
-    depth = estimate_depth_nonlin(alb_ref2,im,dmap_ref,l_est_nonamb_lin,...
-        lambda1,lambda_bound,max_iter,boundary_type,jack,eye_mask);
+    %     im(isnan(im)) = 0;
+    if is_alb_opt
+        [depth,alb] = estimate_depth_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_nonamb_lin,...
+            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt);
+        figure;imshow(alb/255);
+        alb_render = alb/255;
+        title('estimated albedo')
+    else
+        depth = estimate_depth_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_nonamb_lin,...
+            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt);
+        alb = im_c*255;
+        alb_render = alb_ref2*0+1;
+    end
     
-    
-    figure; depth_s=surf(depth,im_c,'edgealpha',0,'facecolor','interp');axis equal
+    figure;
+    depth_s=surf(depth,im_c,'edgealpha',0,'facecolor','interp');axis equal
     colormap 'gray';
     phong.shading(depth_s);
+    title('Estimated Depth')
+    figure;
+    depth_s=surf(z_gt,im_c,'edgealpha',0,'facecolor','interp');axis equal
+    colormap 'gray';
+    phong.shading(depth_s);
+    title('Ground truth')
     [n_new,N_ref_new] =normal_from_depth( depth );
     p = n_ref(:,:,1).*N_ref;
     q = n_ref(:,:,2).*N_ref;
     p_new = n_new(:,:,1).*N_ref_new;
     q_new = n_new(:,:,2).*N_ref_new;
     figure;
-    target = im;
-    target(isnan(N_ref))= 0;
-    im_target = render_model_noGL(n_gt,l_est_nonamb_lin/2,alb_ref2*0+1,0);
+    im_target = render_model_noGL(n_gt,l_est_nonamb_lin,alb_render,0);
     im_target(isnan(N_ref))= 0;
+    if is_alb_opt
+        im_target = im;
+        im_target(isnan(N_ref))= 0;
+    end
     subplot(1,3,1);imshow(im_target)
     title('Target Image')
-    subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin/2,alb_ref2*0+1,0))
+    subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin,alb_render,0))
     title('Reference')
-    subplot(1,3,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin/2,alb_ref2*0+1,0))
+    subplot(1,3,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin,alb_render,0))
     title('Rendered')
     offset = mean(depth(~(isnan(depth) | isnan(z_gt) )))-mean(z_gt(~(isnan(depth) | isnan(z_gt))));
     depth2 = depth - offset;
@@ -170,11 +196,15 @@ for i=1:1
     z_error(isnan(z_error)) = 0;
     imagesc(abs(z_error));
     title('|z_{est}-z_{ground truth}| _{(cm)}')
-    im_diff = alb_ref2./N_ref_new.*(l_est_nonamb_lin(2)*p_new+l_est_nonamb_lin(3)*q_new-l_est_nonamb_lin(4))-im;
+    if size(alb,3)>1
+        alb = rgb2gray(alb/255)*255;
+    end
+    im_diff = alb./N_ref_new.*(l_est_nonamb_lin(2)*p_new+l_est_nonamb_lin(3)*q_new-l_est_nonamb_lin(4))-im*255;
     im_diff(isnan(im_diff))=0;
+    im_diff(eye_mask==0) = 0;
     subplot(1,2,2);
-    imagesc(abs(im_diff));
-    title('error in rendered image')
+    imagesc(abs(im_diff)*100/255);
+    title('error in rendered image (Scale of 0-100)')
     
     drawnow
     % depth = estimate_depth(N_ref,alb_ref,im,dmap_ref,l,50);

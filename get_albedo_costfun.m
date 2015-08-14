@@ -60,8 +60,11 @@ end
 if nargout > 1
     % Jacobian Pattern
         %data terms
+    nR = sum(face(:))+sum(in_inface(:));
     nC = sum(face(:));
+    nOnes = sum(in_face(:))*9 + sum(face(:))*3;
     jacobianPattern = sparse([],[],[],nR,nC,nOnes);
+    n_data = sum(face(:));
     jacobianPattern(sub2ind([nR nC],1:n_data,1:n_data)) = 1;
         %regularization terms
     offset = n_data;
@@ -75,5 +78,4 @@ q = z(yp)-z(yn);
 costfun=@(albedo)cost_nonlin_albedo(albedo,p,q,iz_reg,im(face),rhs_reg,...
     sh_coeff,gaussVec,eye_mask(face));
 end
-
 

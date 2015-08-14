@@ -1,11 +1,11 @@
-function [ depth ] = estimate_depth_nonlin...
-    ( alb_ref, im, z_ref, sh_coeff,lambda1,lambda_bound,max_iter,bound_type,jack,eye_mask,z_gnd,talk)
+function [ depth,alb_out ] = estimate_depth_nonlin...
+    ( alb_ref, im, z_ref, sh_coeff,lambda1,lambda2,lambda_bound,max_iter,bound_type,jack,eye_mask,z_gnd,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
-if nargin <12
+if nargin <13
     talk = 1;
 end
-if nargin<11
+if nargin<12
     is_gnd = 0;
 else
     is_gnd = 1;
@@ -14,8 +14,8 @@ end
 
 [ face,face_inds, inface_inds] = preprocess_estimate_depth( z_ref );
 
-%% Optimization
-[ costfun, is_face,nData,nBound,nReg,jacobianPattern ]...
+%% Optimization - depth
+[ costfun_z, is_face,nData,nBound,nReg,jacobianPattern_z ]...
     = get_depth_costfun( z_ref, im, alb_ref, sh_coeff,eye_mask, lambda1,lambda_bound,bound_type);
 
 init_z = z_ref(is_face);
@@ -23,13 +23,13 @@ init_z = z_ref(is_face);
 % options = optimset('Display','iter-detailed','maxIter',200,...
 %     'Jacobian','on','JacobMult',@jacobMultFnc,'JacobPattern',jacobianPattern);
 options = optimset('Display','iter-detailed','maxIter',max_iter,...
-    'Jacobian',jack,'JacobPattern',jacobianPattern,'Algorithm','levenberg-marquardt'); %
+    'Jacobian',jack,'JacobPattern',jacobianPattern_z,'Algorithm','levenberg-marquardt'); %
 % options = optimset('Display','iter-detailed','maxIter',max_iter,...
 %     'JacobPattern',jacobianPattern); %,'Algorithm','levenberg-marquardt'
 % options = optimset('maxIter',1,'DerivativeCheck','on','Jacobian','on');
 % [z]=lsqnonlin(costfun,init_z,[],[],options);
 
-[z,fval,residual,exitflag,output]=lsqnonlin(costfun,init_z,[],[],options);
+z=lsqnonlin(costfun_z,init_z,[],[],options);
 
 %% Post precessing
 depth = NaN(size(alb_ref));
@@ -39,14 +39,23 @@ depth(~face) = NaN;
 offset = mean(depth(inface_inds)) - mean(z_ref(inface_inds));
 depth = depth-offset;
 
-
+%% Optimization - albedo
+if nargout>1
+    init_alb = alb_ref(is_face);
+    [ costfun_alb,jacobianPattern_alb ] = get_albedo_costfun( depth, im,alb_ref, sh_coeff, eye_mask,lambda2);
+    options = optimset('Display','iter-detailed','maxIter',max_iter,...
+        'Jacobian','off','JacobPattern',jacobianPattern_alb)%,'Algorithm','levenberg-marquardt'); %
+    alb_est = lsqnonlin(costfun_alb,init_alb,[],[],options);
+    alb_out = zeros(size(alb_ref));
+    alb_out(is_face) = alb_est;
+end
 %% showing output
 if talk
-    cost_ref = costfun(init_z).^2;
-    cost_est = costfun(z).^2;
+    cost_ref = costfun_z(init_z).^2;
+    cost_est = costfun_z(z).^2;
     if is_gnd
         z_gndd = z_gnd(is_face);
-        cost_gt= costfun(z_gndd).^2;
+        cost_gt= costfun_z(z_gndd).^2;
     end
     
     s_data = 1;
