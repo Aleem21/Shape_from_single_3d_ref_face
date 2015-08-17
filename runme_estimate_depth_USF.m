@@ -4,14 +4,15 @@ import plot3D_helper.label_axis
 fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
-lambda1 = 70;
-lambda2 = 0.5;
+lambda1 = 30;
+lambda2 = 1;
 lambda_bound = 1;
 max_iter = 50;
 is_albedo = 1;
 is_alb_opt = 1;
 jack = 'on';
 combined = 1;
+is_alb_dz = 1;
 boundary_type = 2;
 flow = 1;
 folder_path = '.\data\USF_images\';
@@ -149,9 +150,9 @@ for i=1:1
     dmap_ref(isnan(im))=nan;
     %     im(isnan(im)) = 0;
     if combined
-        [depth,alb] = estimate_depth_alb_nonlin(alb_ref2,im,dmap_ref,l_est_nonamb_lin,...
-            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt);
-        alb = alb*255;
+        [depth,alb] = estimate_depth_alb_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_nonamb_lin,...
+            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_alb_dz,z_gt);
+%         alb = alb*255;
         figure;imshow(alb/255);
         alb_render = alb/255;
         title('estimated albedo')
@@ -188,11 +189,13 @@ for i=1:1
         im_target = im;
         im_target(isnan(N_ref))= 0;
     end
-    subplot(1,3,1);imshow(im_target)
+    subplot(2,2,1);imshow(im_target)
     title('Target Image')
-    subplot(1,3,2);imshow(render_model_noGL(n_ref,l_est_nonamb_lin,alb_ref,0))
-    title('Reference')
-    subplot(1,3,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin,alb_render,0))
+    subplot(2,2,2);imshow(alb_render)
+    title('Albedo')
+    subplot(2,2,3);imshow(render_model_noGL(n_new,l_est_nonamb_lin,alb_render*0+1,0))
+    title('Shape')
+    subplot(2,2,4);imshow(render_model_noGL(n_new,l_est_nonamb_lin,alb_render,0))
     title('Rendered')
     offset = mean(depth(~(isnan(depth) | isnan(z_gt) )))-mean(z_gt(~(isnan(depth) | isnan(z_gt))));
     depth2 = depth - offset;

@@ -44,7 +44,7 @@ if nargout>1
     init_alb = alb_ref(is_face);
     [ costfun_alb,jacobianPattern_alb ] = get_albedo_costfun( depth, im,alb_ref, sh_coeff, eye_mask,lambda2);
     options = optimset('Display','iter-detailed','maxIter',max_iter,...
-        'Jacobian','off','JacobPattern',jacobianPattern_alb)%,'Algorithm','levenberg-marquardt'); %
+        'Jacobian','off','JacobPattern',jacobianPattern_alb);%,'Algorithm','levenberg-marquardt'); %
     alb_est = lsqnonlin(costfun_alb,init_alb,[],[],options);
     alb_out = zeros(size(alb_ref));
     alb_out(is_face) = alb_est;

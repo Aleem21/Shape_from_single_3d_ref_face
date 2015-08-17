@@ -1,12 +1,12 @@
 function [ depth,alb_out ] = estimate_depth_alb_nonlin...
     ( alb_ref, im, z_ref, sh_coeff,lambda1,lambda2,lambda_bound,max_iter,...
-    bound_type,jack,eye_mask,z_gnd,talk)
+    bound_type,jack,eye_mask,is_alb_dz,z_gnd,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
-if nargin <13
+if nargin <14
     talk = 1;
 end
-if nargin<12
+if nargin<13
     is_gnd = 0;
 else
     is_gnd = 1;
@@ -17,7 +17,7 @@ end
 
 %% Optimization
 [ costfun_z_alb, is_face,nData,nBound,nReg,jacobianPattern_z ]...
-    = get_depth_alb_costfun( z_ref, im, alb_ref, sh_coeff,eye_mask, lambda1,lambda_bound,bound_type);
+    = get_depth_alb_costfun( z_ref, im, alb_ref, sh_coeff,eye_mask, lambda1,lambda2,lambda_bound,bound_type,is_alb_dz);
 init_z = z_ref(is_face);
 init_alb = alb_ref(is_face);
 init_z_alb = [init_z ; init_alb];
@@ -25,10 +25,8 @@ init_z_alb = [init_z ; init_alb];
 % options = optimset('Display','iter-detailed','maxIter',200,...
 %     'Jacobian','on','JacobMult',@jacobMultFnc,'JacobPattern',jacobianPattern);
 
-
-
 options = optimset('Display','iter-detailed','maxIter',max_iter,...
-    'Jacobian',jack,'JacobPattern',jacobianPattern_z,'Algorithm','levenberg-marquardt'); %
+    'Jacobian',jack,'JacobPattern',jacobianPattern_z);%,'Algorithm','levenberg-marquardt'); %
 % options = optimset('Display','iter-detailed','maxIter',max_iter,...
 %     'JacobPattern',jacobianPattern); %,'Algorithm','levenberg-marquardt'
 % options = optimset('maxIter',1,'DerivativeCheck','on','Jacobian','on');

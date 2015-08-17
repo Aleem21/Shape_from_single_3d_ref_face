@@ -26,7 +26,7 @@ else
     ncy = -ncy(b_out_full);
 end
 
-rho_ref = alb_ref(in_face);
+rho_ref = alb_ref(face);
 
 % r,c to index number in face Z's
 [fr,fc] = meshgrid(1:size(face,1),1:size(face,2));
@@ -34,11 +34,22 @@ sub2ind_face = find_elements([r_face c_face],fr',fc');
 
 %% cost function
 % Data term
-xp = sub2ind_face(sub2ind(size(im),r_inface,c_inface-1));
-xn = sub2ind_face(sub2ind(size(im),r_inface,c_inface));
+xp = sub2ind_face(sub2ind(size(im),r_face,c_face-1));
+xn = sub2ind_face(sub2ind(size(im),r_face,c_face));
 
-yp = sub2ind_face(sub2ind(size(im),r_inface-1,c_inface));
-yn = sub2ind_face(sub2ind(size(im),r_inface,c_inface));
+yp = sub2ind_face(sub2ind(size(im),r_face-1,c_face));
+yn = sub2ind_face(sub2ind(size(im),r_face,c_face));
+
+ind = find(xp==0);
+for i = 1:numel(ind)
+    xp(ind(i))=  xn(ind(i));
+    xn(ind(i))=sub2ind_face(sub2ind(size(im),r_face(ind(i)),c_face(ind(i))+1));
+end
+ind = find(yp==0);
+for i = 1:numel(ind)
+    yp(ind(i))=  yn(ind(i));
+    yn(ind(i))= sub2ind_face(sub2ind(size(im),r_face(ind(i))+1,c_face(ind(i))));
+end
 
 % boundary term
 [r_bound,c_bound] = find(b_out_full);
@@ -124,7 +135,7 @@ end
 
 if nargout >2
     % Jacobian Pattern
-    nR = sum(in_face(:))+sum(in_inface(:)) + sum(b_out_full(:));
+    nR = sum(face(:))+sum(in_inface(:)) + sum(b_out_full(:));
     nC = sum(face(:));
     nOnes = sum(in_face(:))*(3+9) + sum(b_out_full(:))*4;
     jacobianPattern = sparse([],[],[],nR,nC,nOnes);
@@ -152,12 +163,12 @@ if type==1
     costfun=@(z)cost_nonlin_depth(z,[xp xn],[yp yn],...
         [xp_bound xn_bound],[yp_bound yn_bound],...
         ncx,ncy,iz_reg,...
-        im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,eye_mask(in_face));
+        im(face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,eye_mask(face));
 else
     costfun=@(z)cost_nonlin_depth(z,[xp xn],[yp yn],...
     [],[],...
     ncx,ncy,iz_reg,...
-    im(in_face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,eye_mask(in_face),i_bound,val_bound,in_face);
+    im(face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,eye_mask(face),i_bound,val_bound,in_face);
 
 end
 nData = numel(xp);

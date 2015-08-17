@@ -1,4 +1,4 @@
-function [ cost, jacobian] = cost_nonlin_depth_alb( z_alb,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg_z,rhs_reg_alb,l,gaussVec,type,eye_mask,i_bound,val_bound,is_face)
+function [ cost, jacobian] = cost_nonlin_depth_alb( z_alb,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg_z,iz_reg_alb,im,rhs_reg_z,rhs_reg_alb,l,gaussVec_z,gaussVec_alb,type,eye_mask,i_bound,val_bound,is_face)
 %DEPTH_COST_NONLIL Summary of this function goes here
 %   Detailed explanation goes here
 %% data cost
@@ -13,17 +13,16 @@ cost_data = (rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4))-im).
 %% boundary conditions
 if type==1
     cost_bound = (z(i_bx(:,1))-z(i_bx(:,2))).*ncx + (z(i_by(:,1))-z(i_by(:,2))).*ncy;
-else
+else 
     cost_bound = sum(z(i_bound).*val_bound,2);
 end
 %% regularization cost
-cost_reg_z = sum(z(iz_reg).*repmat(gaussVec',size(iz_reg,1),1),2)-rhs_reg_z;
-cost_reg_alb = sum(rho(iz_reg).*repmat(gaussVec',size(iz_reg,1),1),2)-rhs_reg_alb;
+cost_reg_z = sum(z(iz_reg_z).*repmat(gaussVec_z',size(iz_reg_z,1),1),2)-rhs_reg_z;
+cost_reg_alb = sum(rho(iz_reg_alb).*repmat(gaussVec_alb',size(iz_reg_alb,1),1),2)-rhs_reg_alb;
 
 %% sum it all up
 % cost = sum(sum(cost_data.^2) + sum(cost_bound.^2) + sum(cost_reg.^2));
 cost = [cost_data; cost_bound; cost_reg_z; cost_reg_alb];
-
 
 %% jacobian
 if nargout >1
@@ -72,23 +71,23 @@ if nargout >1
     end
     % reg term
     offset2 = offset + numel(cost_bound);
-    constNumber3 = repmat(1:size(iz_reg,1),9,1)' + offset2;
-    reg_rhs = repmat(gaussVec',size(iz_reg,1),1);
-    
+    constNumber3 = repmat(1:size(iz_reg_z,1),numel(gaussVec_z),1)' + offset2;
+    reg_rhs_z = repmat(gaussVec_z',size(iz_reg_z,1),1);
+	reg_rhs_alb = repmat(gaussVec_alb',size(iz_reg_alb,1),1);
     offset3 = offset2 + numel(cost_reg_z);
-    constNumber3_alb = repmat(1:size(iz_reg,1),9,1)' + offset3;
-    c_3_alb = iz_reg + numel(z);
+    constNumber3_alb = repmat(1:size(iz_reg_alb,1),numel(gaussVec_alb),1)' + offset3;
+    c_3_alb = iz_reg_alb + numel(z);
     
     if type==1
         jacobian = sparse([constNumber1_z(:); constNumber1_alb(:); constNumber2(:); constNumber3(:)]...
-        ,[i_p(:); i_q(:);c_1_alb(:);i_bx(:);i_by(:);iz_reg(:)]...
-        ,[data_rhs_z(:); data_rhs_alb(:); bnd_rhs(:); reg_rhs(:)],...
-        nR,nC);
+            ,[i_p(:); i_q(:);c_1_alb(:);i_bx(:);i_by(:);iz_reg_z(:)]...
+            ,[data_rhs_z(:); data_rhs_alb(:); bnd_rhs(:); reg_rhs_z(:)],...
+            nR,nC);
     else
-    jacobian = sparse([constNumber1_z(:); constNumber1_alb(:) ;constNumber2(:); constNumber3(:); constNumber3_alb(:)]...
-        ,[i_p(:); i_q(:); c_1_alb(:); i_bnd;i_by(:);iz_reg(:);c_3_alb(:) ]...
-        ,[data_rhs_z(:); data_rhs_alb(:) ;bnd_rhs(:); reg_rhs(:); reg_rhs(:)],...
-        nR,nC);
+        jacobian = sparse([constNumber1_z(:); constNumber1_alb(:) ;constNumber2(:); constNumber3(:); constNumber3_alb(:)]...
+            ,[i_p(:); i_q(:); c_1_alb(:); i_bnd;i_by(:);iz_reg_z(:);c_3_alb(:) ]...
+            ,[data_rhs_z(:); data_rhs_alb(:) ;bnd_rhs(:); reg_rhs_z(:); reg_rhs_alb(:)],...
+            nR,nC);
     end
 end
 end
