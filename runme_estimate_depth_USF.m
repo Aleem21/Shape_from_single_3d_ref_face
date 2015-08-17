@@ -4,13 +4,14 @@ import plot3D_helper.label_axis
 fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
-lambda1 = 50;
-lambda2 = 1;
+lambda1 = 70;
+lambda2 = 0.5;
 lambda_bound = 1;
 max_iter = 50;
 is_albedo = 1;
 is_alb_opt = 1;
 jack = 'on';
+combined = 1;
 boundary_type = 2;
 flow = 1;
 folder_path = '.\data\USF_images\';
@@ -147,7 +148,14 @@ for i=1:1
     end
     dmap_ref(isnan(im))=nan;
     %     im(isnan(im)) = 0;
-    if is_alb_opt
+    if combined
+        [depth,alb] = estimate_depth_alb_nonlin(alb_ref2,im,dmap_ref,l_est_nonamb_lin,...
+            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt);
+        alb = alb*255;
+        figure;imshow(alb/255);
+        alb_render = alb/255;
+        title('estimated albedo')
+    elseif is_alb_opt
         [depth,alb] = estimate_depth_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_nonamb_lin,...
             lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt);
         figure;imshow(alb/255);
