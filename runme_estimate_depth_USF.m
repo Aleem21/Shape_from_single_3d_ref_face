@@ -4,7 +4,7 @@ import plot3D_helper.label_axis
 fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
-lambda1 = 70;
+lambda1 = 30;
 lambda2 = 1;
 lambda_bound = 1;
 max_iter = 50;
@@ -14,12 +14,12 @@ jack = 'on';
 combined = 1;
 is_alb_dz = 1;
 algo = 'levenberg-marquardt';
-% algo = 'trust-region-reflective';
+algo = 'trust-region-reflective';
 boundary_type = 2;
 flow = 1;
 folder_path = '.\data\USF_images\';
 talk = 0;
-impaths = {'03699c19.eko'};
+impaths = {'03653c16.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
@@ -27,7 +27,7 @@ count = 1;
 for i=1:1
     impath = [folder_path impaths{i}];
     %% make image
-    sh_coeff = [0 0.6 0.5 -1.3]*1;
+    sh_coeff = [0 0.6 0.5 -1.3];
     x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
     A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
     
@@ -263,18 +263,74 @@ for i=1:1
     im1r = im1(:,:,1);
     im1g = im1(:,:,2);
     im1b = im1(:,:,3);
+    
+    writerObj = VideoWriter('relighting.mp4','MPEG-4');
+    writerObj.FrameRate = 30;
+    open(writerObj);
+    speed = 1.5;
     f=figure;
-    for i=[linspace(0,pi/4,60) linspace(pi/4,-pi/4,120) ]
-    l2 = spherical_harmonics.rotate(l1,'yrotate',i);
-    im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-    im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-    im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-    im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
-    im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
-    im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
-    imshow(im2);
-    figure(f)
-    drawnow
+%     rotMat = eye(4);
+%     q1 = quaternion.angle2quat(0,0,0);
+%     q2 = quaternion.angle2quat(0,pi/4,0);
+    for i=linspace(0,pi/4,60/speed)
+        l2 = spherical_harmonics.rotate(l1,...
+            'rotationMatrix',makehgtform('yrotate',i)*rotMat);
+        im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
+        im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
+        im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
+        imshow(im2);
+        figure(f)
+        drawnow
+        writeVideo(writerObj,getframe);
     end
+    rotMat = makehgtform('yrotate',i)*rotMat;
+    for i=linspace(0,pi/4,60/speed)
+        l2 = spherical_harmonics.rotate(l1,...
+            'rotationMatrix',makehgtform('xrotate',i)*rotMat);
+        im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
+        im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
+        im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
+        imshow(im2);
+        figure(f)
+        drawnow
+        writeVideo(writerObj,getframe);
+    end
+    rotMat = makehgtform('xrotate',i)*rotMat;
+    for i=linspace(0,-pi/2,120/speed)
+        l2 = spherical_harmonics.rotate(l1,...
+            'rotationMatrix',makehgtform('yrotate',i)*rotMat);
+        im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
+        im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
+        im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
+        imshow(im2);
+        figure(f)
+        drawnow
+        writeVideo(writerObj,getframe);
+    end
+    rotMat = makehgtform('yrotate',i)*rotMat;
+    for i=linspace(0,-pi/2,120/speed)
+        l2 = spherical_harmonics.rotate(l1,...
+            'rotationMatrix',makehgtform('xrotate',i)*rotMat);
+        im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
+        im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
+        im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
+        imshow(im2);
+        figure(f)
+        drawnow
+        writeVideo(writerObj,getframe);
+    end
+    close(writerObj);
     
 end
