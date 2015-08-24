@@ -269,7 +269,7 @@ for i=1:1
     open(writerObj);
     speed = 1.5;
     f=figure;
-%     rotMat = eye(4);
+    rotMat = eye(4);
 %     q1 = quaternion.angle2quat(0,0,0);
 %     q2 = quaternion.angle2quat(0,pi/4,0);
     for i=linspace(0,pi/4,60/speed)
