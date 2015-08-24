@@ -47,7 +47,7 @@ if n_levels>0
         for i=numel(im1_pyr):-1:1
             uv = imresize(uv,[size(im1_pyr{i},1) size(im1_pyr{i},2)]);
             [x, y] = meshgrid(1:size(im1_pyr{i},2), 1:size(im1_pyr{i},1));
-            for j=1:n_iters
+            for j=1:n_iters-((n_iters/numel(im1_pyr)*i))+1
                 im1_cur  = interp2(im1_pyr{i}, x-uv(:,:,1), y-uv(:,:,2));
                 im1_cur(isnan(im1_cur)) = im1_pyr{i}(isnan(im1_cur));
                 

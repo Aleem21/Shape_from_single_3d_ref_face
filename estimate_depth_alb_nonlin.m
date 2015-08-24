@@ -1,10 +1,13 @@
 function [ depth,alb_out ] = estimate_depth_alb_nonlin...
     ( alb_ref, im, z_ref, sh_coeff,lambda1,lambda2,lambda_bound,max_iter,...
-    bound_type,jack,eye_mask,is_alb_dz,z_gnd,talk)
+    bound_type,jack,eye_mask,is_alb_dz,z_gnd,algo,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
-if nargin <14
+if nargin <15
     talk = 1;
+end
+if nargin < 14
+    algo = 'levenberg-marquardt';
 end
 if nargin<13
     is_gnd = 0;
@@ -26,7 +29,7 @@ init_z_alb = [init_z ; init_alb];
 %     'Jacobian','on','JacobMult',@jacobMultFnc,'JacobPattern',jacobianPattern);
 
 options = optimset('Display','iter-detailed','maxIter',max_iter,...
-    'Jacobian',jack,'JacobPattern',jacobianPattern_z);%,'Algorithm','levenberg-marquardt'); %
+    'Jacobian',jack,'JacobPattern',jacobianPattern_z,'Algorithm',algo); %
 % options = optimset('Display','iter-detailed','maxIter',max_iter,...
 %     'JacobPattern',jacobianPattern); %,'Algorithm','levenberg-marquardt'
 % options = optimset('maxIter',1,'DerivativeCheck','on','Jacobian','on');
@@ -48,6 +51,8 @@ offset = mean(depth(inface_inds)) - mean(z_ref(inface_inds));
 depth = depth-offset;
 cost_ref = costfun_z_alb(init_z_alb).^2;
 cost_est = costfun_z_alb(z_alb).^2;
+figure;plot(cost_ref);hold on;
+plot(cost_est);
 %% showing output
 if talk
     %     cost_ref = costfun_z(init_z).^2;

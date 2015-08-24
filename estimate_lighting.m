@@ -2,9 +2,11 @@ function [ l ] = estimate_lighting( n, alb, im,nComp,talk,is_ambient,non_lin )
 %ESTIMATE_LIGHTING etimate lighting spherical harmonic coefficients given
 %the normal map and input image
 %
-%   im must be grayscale
-%   n must be of dimensions same as image with 3rd dimension having 3
-%   slices containing nx,ny,nz
+% Syntax:
+%       estimate_lighting( n, alb, im,nComp,talk,is_ambient,non_lin )
+%
+%   im must be grayscale n must be of dimensions same as image with 3rd
+%   dimension having 3 slices containing nx,ny,nz
 
 if nargin<4
     nComp = 4;

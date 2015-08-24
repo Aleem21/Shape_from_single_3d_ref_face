@@ -4,7 +4,7 @@ import plot3D_helper.label_axis
 fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
-lambda1 = 30;
+lambda1 = 70;
 lambda2 = 1;
 lambda_bound = 1;
 max_iter = 50;
@@ -13,11 +13,13 @@ is_alb_opt = 1;
 jack = 'on';
 combined = 1;
 is_alb_dz = 1;
+algo = 'levenberg-marquardt';
+% algo = 'trust-region-reflective';
 boundary_type = 2;
 flow = 1;
 folder_path = '.\data\USF_images\';
 talk = 0;
-impaths = {'03653c16.eko'};
+impaths = {'03699c19.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
@@ -25,7 +27,7 @@ count = 1;
 for i=1:1
     impath = [folder_path impaths{i}];
     %% make image
-    sh_coeff = [0 0.6 0.5 -1.3];
+    sh_coeff = [0 0.6 0.5 -1.3]*1;
     x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
     A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
     
@@ -44,7 +46,7 @@ for i=1:1
         im_c = im_c*0+1;
     end
     im_c = render_model_noGL(n_gt,sh_coeff,im_c,0);
-    %     im_c = imresize(im2double(imread('.\data\l_test\scarlet.jpg')),0.3);
+    %     im_c = imresize(im2double(imread('.\data\testface.jpg')),1);
     im = rgb2gray(im_c);
     if ~is_albedo
         im = im_c(:,:,1);
@@ -136,13 +138,15 @@ for i=1:1
     
     
     im_rendered = render_model_noGL(n_ref,l_est_nonamb_lin,alb_ref,0);
+    alb_ref2 = alb_ref;
     if flow
-        n_levels = 10;
-        n_iters = 1;
+        n_levels = 4;
+        n_iters = 0;
         morph = 1;
         [alb_ref2,dmap_ref,eye_mask]=compute_flow(im,im_rendered,...
-            landmarks,alb_ref,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
+            landmarks,im_rendered,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
     end
+    dmap_ref(isnan(alb_ref2)) = nan;
     talk = 1;
     if ~is_albedo
         l_est_nonamb_lin = sh_coeff;
@@ -151,24 +155,26 @@ for i=1:1
     %     im(isnan(im)) = 0;
     if combined
         [depth,alb] = estimate_depth_alb_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_nonamb_lin,...
-            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_alb_dz,z_gt);
-%         alb = alb*255;
+            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_alb_dz,z_gt,algo);
+        %         alb = alb*255;
         figure;imshow(alb/255);
         alb_render = alb/255;
         title('estimated albedo')
     elseif is_alb_opt
         [depth,alb] = estimate_depth_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_nonamb_lin,...
-            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt);
+            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt,algo,0);
         figure;imshow(alb/255);
         alb_render = alb/255;
         title('estimated albedo')
     else
         depth = estimate_depth_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_nonamb_lin,...
-            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt);
+            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt,algo,0);
         alb = im_c*255;
         alb_render = alb_ref2*0+1;
     end
     
+    
+    alb_render = max(alb_render,0);
     figure;
     depth_s=surf(depth,im_c,'edgealpha',0,'facecolor','interp');axis equal
     colormap 'gray';
@@ -182,6 +188,7 @@ for i=1:1
     [n_new,N_ref_new] =normal_from_depth( depth );
     p_new = n_new(:,:,1).*N_ref_new;
     q_new = n_new(:,:,2).*N_ref_new;
+    
     figure;
     im_target = render_model_noGL(n_gt,l_est_nonamb_lin,alb_render,0);
     im_target(isnan(N_ref))= 0;
@@ -220,8 +227,54 @@ for i=1:1
     
     if mod(count,3)==0 && i<n
         f=figure;
-        count = 0;h
+        count = 0;
         
     end
     count = count+1;
+    
+    im1 = im_c;
+    a0 = pi;
+    a1 = 2*pi/sqrt(3);
+    a2= 2*pi/sqrt(8);
+    
+    c0 =    sqrt(1  /(4*pi));
+    c1 =    sqrt(3  /(4*pi));
+    c2 = 3* sqrt(5  /(12*pi));
+    nx = n_new(:,:,1);
+    nx = nx(:)';        %change to row vector
+    ny = n_new(:,:,2);
+    ny = ny(:)';
+    nz = n_new(:,:,3);
+    nz = nz(:)';
+    Y = [   a0*c0*     ones(size(nx));
+        a1*c1*     nx;
+        a1*c1*     ny;
+        a1*c1*     nz;
+        a2*c2*     nx.*ny;
+        a2*c2*     nx.*nz;
+        a2*c2*     ny.*nz;
+        a2*c2/2*    (nx.^2 - ny.^2);
+        a2*c2/(12)^.5*   (3*nz.^2-1) ];
+    
+    l1 = estimate_lighting(n_new,alb_ref2,im,4,0,0,0);
+    l1 = l1./ [a0*c0; a1*c1; a1*c1; a1*c1;  a2*c2; a2*c2; a2*c2; a2*c2/2; a2*c2/(12)^.5 ];
+    l1 = l1(1:4);
+    Y = Y(1:4,:);
+    im1r = im1(:,:,1);
+    im1g = im1(:,:,2);
+    im1b = im1(:,:,3);
+    f=figure;
+    for i=[linspace(0,pi/4,60) linspace(pi/4,-pi/4,120) ]
+    l2 = spherical_harmonics.rotate(l1,'yrotate',i);
+    im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+    im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+    im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+    im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
+    im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
+    im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
+    imshow(im2);
+    figure(f)
+    drawnow
+    end
+    
 end
