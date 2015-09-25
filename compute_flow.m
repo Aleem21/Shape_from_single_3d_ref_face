@@ -11,8 +11,9 @@ im2(isnan(im2)) = 0;
 
 if morph
     landmarks_ref = stasm_tracker(im1,4);
-    p = landmarks_ref;
-    q = landmarks;
+    valid = 17:77;
+    p = landmarks_ref(:,valid);
+    q = landmarks(:,valid);
     step = 15;
     [X,Y] = meshgrid(1:step:size(im1,2),1:step:size(im1,1));
     gv = [X(:)';Y(:)'];

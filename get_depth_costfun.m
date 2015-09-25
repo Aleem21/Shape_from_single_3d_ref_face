@@ -1,10 +1,9 @@
-function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_depth_costfun( z_ref, im,alb_ref, sh_coeff, eye_mask,lambda1,lambda_bound,type)
+function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_depth_costfun( z_ref, im,alb_ref, sh_coeff, eye_mask,lambda1,lambda_bound,type,is_dz_depth,lambda_dz)
 %GET_COSTFUN Summary of this function goes here
 %   Detailed explanation goes here
 %% Pre processing
 [ face,face_inds, inface_inds,in_face,r_face,c_face,r_inface,c_inface,...
     b_out_full,b_in_full ] = preprocess_estimate_depth( z_ref );
-
 
 % boundary contour normals
 [ncy,ncx] = find_countour_normal(b_out_full);
@@ -163,12 +162,12 @@ if type==1
     costfun=@(z)cost_nonlin_depth(z,[xp xn],[yp yn],...
         [xp_bound xn_bound],[yp_bound yn_bound],...
         ncx,ncy,iz_reg,...
-        im(face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,eye_mask(face));
+        im(face),rhs_reg,lambda_dz,sh_coeff,rho_ref,z_ref(in_face),gaussVec,type,is_dz_depth,eye_mask(face));
 else
     costfun=@(z)cost_nonlin_depth(z,[xp xn],[yp yn],...
     [],[],...
     ncx,ncy,iz_reg,...
-    im(face),rhs_reg,sh_coeff,rho_ref,gaussVec,type,eye_mask(face),i_bound,val_bound,in_face);
+    im(face),rhs_reg,lambda_dz,sh_coeff,rho_ref,z_ref(in_face),gaussVec,type,is_dz_depth,eye_mask(face),i_bound,val_bound,in_face);
 
 end
 nData = numel(xp);

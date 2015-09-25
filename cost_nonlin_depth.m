@@ -1,4 +1,4 @@
-function [ cost, jacobian] = cost_nonlin_depth( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,l,rho,gaussVec,type,eye_mask,i_bound,val_bound,is_face)
+function [ cost, jacobian] = cost_nonlin_depth( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,lambda_dz,l,rho,z_ref,gaussVec,type,is_dz_depth,eye_mask,i_bound,val_bound,is_face)
 %DEPTH_COST_NONLIL Summary of this function goes here
 %   Detailed explanation goes here
 %% data cost
@@ -15,10 +15,14 @@ else
 end
 %% regularization cost
 cost_reg = sum(z(iz_reg).*repmat(gaussVec',size(iz_reg,1),1),2)-rhs_reg;
-
+if is_dz_depth
+    cost_reg_dz = (z(iz_reg(:,5))-z_ref)*lambda_dz;
+else
+    cost_reg_dz = [];
+end
 %% sum it all up
 % cost = sum(sum(cost_data.^2) + sum(cost_bound.^2) + sum(cost_reg.^2));
-cost = [cost_data; cost_bound; cost_reg];
+cost = [cost_data; cost_bound; cost_reg; cost_reg_dz];
 
 
 %% jacobian
@@ -68,15 +72,25 @@ if nargout >1
     offset2 = offset + numel(cost_bound);
     constNumber3 = repmat(1:size(iz_reg,1),9,1)' + offset2;
     reg_rhs = repmat(gaussVec',size(iz_reg,1),1);
+    if is_dz_depth
+        offset3 = offset2 + numel(cost_reg);
+        constNumber4 = (1:size(iz_reg,1)) + offset3;
+        col4 = iz_reg(:,5);
+        rhs_reg_dz = ones(1,numel(col4))*lambda_dz;
+    else
+        constNumber4 = [];
+        col4 = [];
+        rhs_reg_dz = [];
+    end
     if type==1
-        jacobian = sparse([constNumber1(:); constNumber2(:); constNumber3(:)]...
-        ,[i_p(:); i_q(:,1);i_bx(:);i_by(:);iz_reg(:)]...
-        ,[data_rhs(:); bnd_rhs(:); reg_rhs(:)],...
+        jacobian = sparse([constNumber1(:); constNumber2(:); constNumber3(:); constNumber4(:)]...
+        ,[i_p(:); i_q(:,1);i_bx(:);i_by(:);iz_reg(:);col4(:)]...
+        ,[data_rhs(:); bnd_rhs(:); reg_rhs(:); rhs_reg_dz(:)],...
         nR,nC);
     else
-    jacobian = sparse([constNumber1(:); constNumber2(:); constNumber3(:)]...
-        ,[i_p(:); i_q(:,1);i_bnd;i_by(:);iz_reg(:); ]...
-        ,[data_rhs(:); bnd_rhs(:); reg_rhs(:)],...
+    jacobian = sparse([constNumber1(:); constNumber2(:); constNumber3(:); constNumber4(:)]...
+        ,[i_p(:); i_q(:,1);i_bnd;i_by(:);iz_reg(:);col4(:)]...
+        ,[data_rhs(:); bnd_rhs(:); reg_rhs(:); rhs_reg_dz(:)],...
         nR,nC);
     end
 end

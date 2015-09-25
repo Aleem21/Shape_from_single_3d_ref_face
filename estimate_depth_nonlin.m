@@ -1,14 +1,14 @@
 function [ depth,alb_out ] = estimate_depth_nonlin...
-    ( alb_ref, im, z_ref, sh_coeff,lambda1,lambda2,lambda_bound,max_iter,bound_type,jack,eye_mask,z_gnd,algo,talk)
+    ( alb_ref, im, z_ref, sh_coeff,lambda1,lambda2,lambda_bound,max_iter,bound_type,jack,eye_mask,is_dz_depth,lambda_dz,z_gnd,algo,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
-if nargin <14
+if nargin <15
     talk = 1;
 end
-if nargin <13
+if nargin <14
     algo = 'levenberg-marquardt';
 end
-if nargin<12
+if nargin<13
     is_gnd = 0;
 else
     is_gnd = 1;
@@ -19,7 +19,8 @@ end
 
 %% Optimization - depth
 [ costfun_z, is_face,nData,nBound,nReg,jacobianPattern_z ]...
-    = get_depth_costfun( z_ref, im, alb_ref, sh_coeff,eye_mask, lambda1,lambda_bound,bound_type);
+    = get_depth_costfun( z_ref, im, alb_ref, sh_coeff,eye_mask, lambda1,...
+    lambda_bound,bound_type,is_dz_depth,lambda_dz);
 
 init_z = z_ref(is_face);
 % options = optimset('Display','iter-detailed','maxIter',100,'JacobPattern',jacobianPattern);
@@ -47,7 +48,7 @@ if nargout>1
     init_alb = alb_ref(is_face);
     [ costfun_alb,jacobianPattern_alb ] = get_albedo_costfun( depth, im,alb_ref, sh_coeff, eye_mask,lambda2);
     options = optimset('Display','iter-detailed','maxIter',max_iter,...
-        'Jacobian',jack,'JacobPattern',jacobianPattern_alb,'Algorithm',algo); %
+        'Jacobian',jack,'JacobPattern',jacobianPattern_alb,'Algorithm','levenberg-marquardt'); %
     alb_est = lsqnonlin(costfun_alb,init_alb,[],[],options);
     alb_out = zeros(size(alb_ref));
     alb_out(is_face) = alb_est;
@@ -87,4 +88,5 @@ if talk
             s_reg:e_reg,cost_gt(s_reg:e_reg));
         title('Ground truth cost')
     end
+
 end

@@ -5,24 +5,26 @@ fusion_path = '.\data\fusion.jpg';
 
 %% set initial variables
 lambda1 = 50;
-lambda2 = 10;
+lambda2 = 30;
 lambda_bound = 1;
+is_dz_depth = 0;
+lambda_dz = 0;
 max_iter = 50;
 is_albedo = 1;
 is_alb_opt = 1;
 jack = 'on';
 combined = 0;
-is_alb_dz = 0;
+is_alb_dz = 1;
 algo = 'levenberg-marquardt';
 algo = 'trust-region-reflective';
 boundary_type = 2;
 flow = 1;
 internet = 0;
 internet_path = '.\data\internet\';
-internet_imgs = {'obama.png'};
+internet_imgs = {'putin_cropped.png'};
 folder_path = '.\data\USF_images\';
-talk = 0;
-impaths = {'03721c15.eko'};
+talk = 4;
+impaths = {'03643c18.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
@@ -82,7 +84,6 @@ for i=1:1
     rRes = size(im,1);
     [dmap_ref, n_ref, N_ref, alb_ref,eye_mask,scalez] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,talk);
     % [dmap_ref, n_ref] = generate_ref_depthmap(ply_path,Scale, talk, 1000, 1000, Rpose,im);
-    
     N_ref(isnan(im))=nan;
     %     N_gnd(isnan(N_ref))=NaN;
     n_ref((isnan(repmat(im,1,1,3)))) = nan;
@@ -149,8 +150,8 @@ for i=1:1
         n_levels = 4;
         n_iters = 2;
         morph = 1;
-        [alb_ref2,dmap_ref,eye_mask]=compute_flow(im,im_rendered,...
-            landmarks,alb_ref,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
+        [alb_ref2,dmap_ref,eye_mask]=compute_flow(im,im_rendered,landmarks,...
+            im_rendered,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
     end
     dmap_ref(isnan(alb_ref2)) = nan;
     talk = 1;
@@ -158,6 +159,7 @@ for i=1:1
         l_est_amb_lin = sh_coeff;
     end
     dmap_ref(isnan(im))=nan;
+    dmap_ref(dmap_ref==0) = nan;
     %     im(isnan(im)) = 0;
     if combined
         [depth,alb] = estimate_depth_alb_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_amb_lin,...
@@ -168,7 +170,7 @@ for i=1:1
         title('estimated albedo')
     elseif is_alb_opt
         [depth,alb] = estimate_depth_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_amb_lin,...
-            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt,algo,0);
+            lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_dz_depth,lambda_dz,z_gt,algo,0);
         figure;imshow(alb/255);
         alb_render = alb/255;
         title('estimated albedo')
@@ -208,9 +210,12 @@ for i=1:1
     title('Target Image')
     subplot(2,2,2);imshow(alb_render)
     title('Albedo')
-    subplot(2,2,3);imshow(render_model_noGL(n_new,l_est_amb_lin,alb_render*0+1,0),[]);
+    subplot(2,2,3);imshow(render_model_noGL(n_new,l_est_amb_lin,alb_render*0+1,0));
     title('Shape')
-    subplot(2,2,4);imshow(render_model_noGL(n_new,l_est_amb_lin,alb_render,0))
+    eye_mask(isnan(eye_mask))=0;
+    eye_mask = double(eye_mask>0);
+
+    subplot(2,2,4);imshow(render_model_noGL(n_new,l_est_amb_lin,alb_render,0));
     title('Rendered')
     offset = mean(depth(~(isnan(depth) | isnan(z_gt) )))-mean(z_gt(~(isnan(depth) | isnan(z_gt))));
     depth2 = depth - offset;
@@ -239,11 +244,12 @@ for i=1:1
         
     end
     count = count+1;
-    
-    l_new = estimate_lighting(n_new,alb_ref2,im,4,0,0,0);
+    is_ambient = 1;
+    non_lin = 0;
+    l_new = estimate_lighting(n_new,alb_ref2,im,4,0,is_ambient,non_lin);
     
     frameRate = 10;
     speed = 5;
-    span = 0.8;
+    span = 1.5;
     do_relighting( im_c,l_new,n_new,frameRate,speed,span)
 end

@@ -65,9 +65,9 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         [z,y,x]=quaternion.quat2angle(q_cur);
         l2 = spherical_harmonics.rotate(l1,...
             'xrotate',x,'yrotate',y,'zrotate',z);
-        im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-        im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-        im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vr = im1r(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vg = im1g(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vb = im1b(:) .* (l2'*Y)'./(l1'*Y)';
         im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
         im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
         im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
@@ -85,9 +85,9 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         [z,y,x]=quaternion.quat2angle(q_cur);
         l2 = spherical_harmonics.rotate(l1,...
             'xrotate',x,'yrotate',y,'zrotate',z);
-        im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-        im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-        im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vr = im1r(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vg = im1g(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vb = im1b(:) .* (l2'*Y)'./(l1'*Y)';
         im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
         im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
         im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
@@ -105,9 +105,9 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         [z,y,x]=quaternion.quat2angle(q_cur);
         l2 = spherical_harmonics.rotate(l1,...
             'xrotate',x,'yrotate',y,'zrotate',z);
-        im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-        im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-        im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vr = im1r(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vg = im1g(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vb = im1b(:) .* (l2'*Y)'./(l1'*Y)';
         im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
         im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
         im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
@@ -125,8 +125,9 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         [z,y,x]=quaternion.quat2angle(q_cur);
         l2 = spherical_harmonics.rotate(l1,...
             'xrotate',x,'yrotate',y,'zrotate',z);
-        im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-        im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vr = im1r(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vg = im1g(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vb = im1b(:) .* (l2'*Y)'./(l1'*Y)';
         im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
         im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
         im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
@@ -145,9 +146,9 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         [z,y,x]=quaternion.quat2angle(q_cur);
         l2 = spherical_harmonics.rotate(l1,...
             'xrotate',x,'yrotate',y,'zrotate',z);
-        im2Vr = max(im1r(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-        im2Vg = max(im1g(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
-        im2Vb = max(im1b(:) .* max((l2'*Y)',0)./(l1'*Y)',0);
+        im2Vr = im1r(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vg = im1g(:) .* (l2'*Y)'./(l1'*Y)';
+        im2Vb = im1b(:) .* (l2'*Y)'./(l1'*Y)';
         im2(:,:,1) = reshape(im2Vr,[size(im1,1) size(im1,2)] );
         im2(:,:,2) = reshape(im2Vg,[size(im1,1) size(im1,2)] );
         im2(:,:,3) = reshape(im2Vb,[size(im1,1) size(im1,2)] );
