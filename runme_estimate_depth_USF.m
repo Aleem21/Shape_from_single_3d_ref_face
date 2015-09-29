@@ -54,6 +54,7 @@ internet_imgs = {'putin_cropped.png'};
 % USF images path
 folder_path = '.\data\USF_images\';
 
+% change this for different USF images
 impaths = {'03721c15.eko'};
 n = numel(impaths);
 f=figure;hold on
@@ -116,9 +117,10 @@ restrictive = 1;
 % Rpose = Rpose/R;
 %% generate ref depth map
 ply_path = '.\data\ref_model.ply';
+dataset_path = 'D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test';
 cRes = size(im,2);
 rRes = size(im,1);
-[dmap_ref, n_ref, N_ref, alb_ref,eye_mask,scalez] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,talk);
+[dmap_ref, n_ref, N_ref, alb_ref,eye_mask,scalez] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,dataset_path,talk);
 N_ref(isnan(im))=nan;
 %     N_gnd(isnan(N_ref))=NaN;
 n_ref((isnan(repmat(im,1,1,3)))) = nan;
@@ -220,9 +222,8 @@ q_new = n_new(:,:,2).*N_ref_new;
 % im_complex = repmat(D,1,1,3).*im_c_gt + repmat(S,1,1,3);
 % imshow(im_complex)
 
-
-figure;
-depth_s=surf(dmap_ref,D_naive,'edgealpha',0,'facecolor','interp');axis equal
+% figure;
+% depth_s=surf(dmap_ref,D_naive,'edgealpha',0,'facecolor','interp');axis equal
 
 
 figure;
