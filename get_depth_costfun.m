@@ -28,8 +28,11 @@ end
 rho_ref = alb_ref(face);
 
 % r,c to index number in face Z's
-[fr,fc] = meshgrid(1:size(face,1),1:size(face,2));
-sub2ind_face = find_elements([r_face c_face],fr',fc');
+% [fr,fc] = meshgrid(1:size(face,1),1:size(face,2));
+% sub2ind_face = find_elements([r_face c_face],fr',fc');
+
+sub2ind_face = zeros(size(face));
+sub2ind_face(face) = 1:sum(face(:));
 
 %% cost function
 % Data term
@@ -111,8 +114,8 @@ end
 in_inface = in_face;
 
 [r_innface,c_innface] = find(in_inface);
-innface_inds = sub2ind(size(face),r_innface,c_innface);
-
+% innface_inds = sub2ind(size(face),r_innface,c_innface);
+innface_inds = find(in_inface);
 
 sz = 3; dev = 2;
 gauss = fspecial('gaussian',sz,dev);

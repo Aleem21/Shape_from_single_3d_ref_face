@@ -9,10 +9,10 @@ else
     theta_i = asin(sin(theta_t)*n2/n1);
 end
 
-t_parr = 2*sin(theta_t)*cos(theta_i)/(sin(theta_i+theta_t)*cos(theta_i-theta_t));
-t_perp = 2*sin(theta_t)*cos(theta_i)/sin(theta_i+theta_t);
-t = mean([t_parr t_perp]);
-transmitance = t^2 * n2*cos(theta_t)/n1/cos(theta_i);
+t_parr = 2*sin(theta_t).*cos(theta_i)./(sin(theta_i+theta_t).*cos(theta_i-theta_t));
+t_perp = 2*sin(theta_t).*cos(theta_i)./sin(theta_i+theta_t);
+t = (t_parr+t_perp)/2;
+transmitance = t.^2 .* n2.*cos(theta_t)/n1./cos(theta_i);
 
 end
 

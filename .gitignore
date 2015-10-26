@@ -51,7 +51,16 @@ data/
 # external library (Black's code)
 black/
 MLS/
+data/
+stasm4/
+shaders/
+SHT/
+minFuncLib/
 
 
 # Movies for report
 *.mp4
+*.gif
+
+# mex files
+*.mexw64

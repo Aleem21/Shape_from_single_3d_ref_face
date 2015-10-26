@@ -2,7 +2,7 @@ clear variables
 close all
 import plot3D_helper.label_axis
 fusion_path = '.\data\fusion.jpg';
-
+addpath ('.\SHT')
 %% set initial variables
 % optimization weights
 lambda1 = 50;
@@ -47,9 +47,9 @@ boundary_type = 2;
 flow = 1;
 
 % Use some real image as input rather than synthesizing one from dataset?
-internet = 0;
+internet = 1;
 internet_path = '.\data\internet\';
-internet_imgs = {'putin_cropped.png'};
+internet_imgs = {'paper small.png'};
 
 % USF images path
 folder_path = '.\data\USF_images\';
@@ -70,7 +70,7 @@ impath = [folder_path impaths{i}];
 %% make image
 if ~internet
     % choose some spherical harmonic coefficients for image synthesis
-    sh_coeff = [0 0.6 0.5 -1.3];
+    sh_coeff = [0.0 0.6 0.5 -1.3]/1.2;
     x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
     A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
     
@@ -78,8 +78,7 @@ if ~internet
     % Choose image resolution
     imsize = [240 240];
     [im,im_c,z_gt,scales]=read_render_USF(impath,Rpose,imsize);
-    im_c_gt = im_c;
-    alb_gt = im;
+    im_c_gt = im_c;    alb_gt = im;
     
     [n_gt,N_gnd]=normal_from_depth(z_gt);
     if ~is_albedo
@@ -97,9 +96,9 @@ if ~is_albedo
     im = im_c(:,:,1);
 end
 %% Run face tracker
-landmarks = stasm_tracker(im,talk);
+landmarks = stasm_tracker(im_c,talk);
 % landmarks = stasm_tracker(im,talk);
-
+labels = mark_regions(landmarks,im_c);
 if isempty(landmarks)
     warning('no landmarks detected by face tracker')
 end
@@ -117,7 +116,7 @@ restrictive = 1;
 % Rpose = Rpose/R;
 %% generate ref depth map
 ply_path = '.\data\ref_model.ply';
-dataset_path = 'D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test';
+dataset_path = '..\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test';
 cRes = size(im,2);
 rRes = size(im,1);
 [dmap_ref, n_ref, N_ref, alb_ref,eye_mask,scalez] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,dataset_path,talk);
@@ -129,12 +128,12 @@ dmap_ref(isnan(im))=nan;
 if ~is_albedo
     alb_ref = alb_ref*0+1;
 end
-
+alb_ref(alb_ref>0.1) = 1;
 %% estimate lighting
 
 is_ambient = 1;
 non_lin = 0;
-l_est_amb_lin = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin);
+l_est_amb_lin = estimate_lighting(n_ref, alb_ref*0+1, im,4,talk,is_ambient,non_lin);
 x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
 A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
 
@@ -147,10 +146,10 @@ c4_amb_lin = render_model_general('./data/sphere.ply', l_est_amb_lin, Rpose, 100
 figure(f)
 subplot(1,2,1)
 imshow(im)
-title(sprintf('Ground truth\n A: %.0f, E: %.0f',A_gt,E_gt));
+% title(sprintf('Ground truth\n A: %.0f, E: %.0f',A_gt,E_gt));
 
 subplot(1,2,2)
-imshow(c4_amb_lin/2)
+imshow(c4_amb_lin)
 title(sprintf('Ambient, lin\n A: %.0f, E: %.0f',A_est_amb_lin,E_est_amb_lin));
 
 %% Flow computation
@@ -160,13 +159,14 @@ im_rendered = render_model_noGL(n_ref,l_est_amb_lin,alb_ref,0);
 alb_ref2 = alb_ref;
 if flow
     % number of pyramid levels
-    n_levels = 4;
+    n_levels = 2;
     % number of iterations of flow on each level
-    n_iters = 2;
+    n_iters = 1;
     % do morphing before optical flow?
     morph = 1;
+    dmap_ref_old = dmap_ref;
     [alb_ref2,dmap_ref,eye_mask]=compute_flow(im,im_rendered,landmarks,...
-        im_rendered,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
+        alb_ref,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
 end
 dmap_ref(isnan(alb_ref2)) = nan;
 
@@ -179,15 +179,15 @@ dmap_ref(dmap_ref==0) = nan;
 %% Optimization
 %     im(isnan(im)) = 0;
 if combined
-    [depth,alb] = estimate_depth_alb_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_amb_lin,...
+    [depth,alb,is_face] = estimate_depth_alb_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_amb_lin,...
         lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_alb_dz,z_gt,algo);
     %         alb = alb*255;
     figure;imshow(alb/255);
     alb_render = alb/255;
     title('estimated albedo')
 elseif is_alb_opt
-    [depth,alb] = estimate_depth_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_amb_lin,...
-        lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_dz_depth,lambda_dz,z_gt,algo,0);
+    [depth,alb,is_face] = estimate_depth_nonlin(alb_ref2*0+255,im*255,dmap_ref,l_est_amb_lin,...
+        lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_dz_depth,lambda_dz,[],algo,0);
     figure;imshow(alb/255);
     alb_render = alb/255;
     title('estimated albedo')
@@ -197,6 +197,7 @@ else
     alb = im_c*255;
     alb_render = alb_ref2*0+1;
 end
+is_face = remove_bad_boundary(is_face)>0;
 
 %% Display results
 alb_render = max(alb_render,0);
@@ -205,26 +206,20 @@ depth_s=surf(depth,im_c,'edgealpha',0,'facecolor','interp');axis equal
 colormap 'gray';
 phong.shading(depth_s);
 title('Estimated Depth')
-figure;
-depth_s=surf(z_gt,im_c,'edgealpha',0,'facecolor','interp');axis equal
-colormap 'gray';
-phong.shading(depth_s);
-title('Ground truth')
+if exist('z_gt')
+    figure;
+    depth_s=surf(z_gt,im_c,'edgealpha',0,'facecolor','interp');axis equal
+    colormap 'gray';
+    phong.shading(depth_s);
+    title('Ground truth')
+end
 [n_new,N_ref_new] =normal_from_depth( depth );
 p_new = n_new(:,:,1).*N_ref_new;
 q_new = n_new(:,:,2).*N_ref_new;
 
-% complex model
-% figure;
-% rho_s = 1e-4;
-% expo = 30;
-% [I,S,D,D_naive]=render_DS(n_ref,[1;0;1],[0;0;1],expo,rho_s,0.2,im_c,scalez);
-% im_complex = repmat(D,1,1,3).*im_c_gt + repmat(S,1,1,3);
-% imshow(im_complex)
 
-% figure;
-% depth_s=surf(dmap_ref,D_naive,'edgealpha',0,'facecolor','interp');axis equal
-
+intrinsic_decomposition(im_c,depth,labels,(~isnan(dmap_ref).*eye_mask)>0,...
+    is_face,scalez*1000);
 
 figure;
 

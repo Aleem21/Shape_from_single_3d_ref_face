@@ -1,4 +1,4 @@
-function [ depth,alb_out ] = estimate_depth_nonlin...
+function [ depth,alb_out,in_face ] = estimate_depth_nonlin...
     ( alb_ref, im, z_ref, sh_coeff,lambda1,lambda2,lambda_bound,max_iter,bound_type,jack,eye_mask,is_dz_depth,lambda_dz,z_gnd,algo,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
@@ -15,7 +15,7 @@ else
 end
 %% Prepocessing
 
-[ face,face_inds, inface_inds] = preprocess_estimate_depth( z_ref );
+[ face,face_inds, inface_inds,in_face] = preprocess_estimate_depth( z_ref );
 
 %% Optimization - depth
 [ costfun_z, is_face,nData,nBound,nReg,jacobianPattern_z ]...
@@ -52,7 +52,9 @@ if nargout>1
     alb_est = lsqnonlin(costfun_alb,init_alb,[],[],options);
     alb_out = zeros(size(alb_ref));
     alb_out(is_face) = alb_est;
+    alb_out(~in_face)=0;
 end
+depth(~in_face)=nan;
 %% showing output
 if talk
     cost_ref = costfun_z(init_z).^2;
