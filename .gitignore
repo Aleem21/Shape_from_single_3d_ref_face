@@ -50,12 +50,12 @@ data/
 
 # external library (Black's code)
 black/
-MLS/
+#MLS/
 data/
 stasm4/
-shaders/
-SHT/
-minFuncLib/
+#shaders/
+#SHT/
+#minFuncLib/
 
 
 # Movies for report
@@ -63,4 +63,4 @@ minFuncLib/
 *.gif
 
 # mex files
-*.mexw64
+#*.mexw64
