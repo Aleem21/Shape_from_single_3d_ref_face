@@ -17,13 +17,13 @@ catch
         if strcmp(i_path(end-2:end),'mat')
             continue
         end
-        i_env = imresize(imread(i_path),1);
+        i_env = imresize(imread(i_path),0.2);
         if is_gray
             i_env = rgb2gray(i_env);
         end
         
         sh=env2sh(i_env,order,0);
-        sh_vec(:,i) = sh(:);
+        sh_vec(:,i) = sh(:)/norm(sh(:));
     end
     
     
@@ -33,5 +33,8 @@ catch
     
     sh_mean = reshape(sh_mean,len,channels);
     save([impath '/mean_var_cache.mat' ],'sh_mean','sigma')
-    
+    x = rand(81,80);
+    xm = mean(x,2);
+    xc = x-repmat(xm,1,size(x,2));
+    xv = xc*xc'/size(xc,2);
 end

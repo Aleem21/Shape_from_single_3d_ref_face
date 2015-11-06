@@ -216,7 +216,15 @@ end
 [n_new,N_ref_new] =normal_from_depth( depth );
 p_new = n_new(:,:,1).*N_ref_new;
 q_new = n_new(:,:,2).*N_ref_new;
-
+% 
+im_c = imresize(im_c,0.3);
+depth = imresize(depth,0.3)*0.3;
+labels = imresize(labels,0.3,'nearest');
+dmap_ref = imresize(dmap_ref,0.3);
+eye_mask = imresize(eye_mask,0.3,'nearest');
+is_face = ~isnan(depth);
+is_face = remove_bad_boundary(is_face);
+scalez = scalez/0.3;
 
 intrinsic_decomposition(im_c,depth,labels,(~isnan(dmap_ref).*eye_mask)>0,...
     is_face,scalez*1000);

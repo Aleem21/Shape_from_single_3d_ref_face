@@ -14,5 +14,6 @@ if sum(sum(f_vert))~=sum(face(:)) || sum(sum(f_hor))~=sum(face(:))
 else
     face = f_vert.*f_hor;
 end
+face = face>0;
 end
 

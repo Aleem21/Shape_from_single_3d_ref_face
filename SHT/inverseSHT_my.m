@@ -1,4 +1,4 @@
-function F = inverseSHT_my(F_N, dirs, basisType)
+function F = inverseSHT_my(F_N, dirs, basisType,Y_N)
 %INVERSE_SHT Perform the inverse spherical harmonic transform
 %
 %   N:  maximum order of harmonics
@@ -14,12 +14,16 @@ function F = inverseSHT_my(F_N, dirs, basisType)
 %   archontis.politis@aalto.fi
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    % vector of spherical harmonics
-    N = sqrt(size(F_N,1)) - 1;
-    Y_N = getSH(N, dirs, basisType);
-    
+    if nargin <4
+        % vector of spherical harmonics
+        N = sqrt(size(F_N,1)) - 1;
+        Y_N = getSH(N, dirs, basisType);
+    end
     % perform the inverse transform up to degree N
-    F = dot(Y_N',F_N);
+    if size(F_N,2)==1
+        F = Y_N*F_N;
+    else
+        F = dot(Y_N',F_N);
+    end
 
 end

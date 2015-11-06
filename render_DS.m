@@ -1,4 +1,4 @@
-function [ I,S,I_D ] = render_DS( N_v,w_o,n,rho_s,alb,r,Light_sh,is_face,delta_a,delta_s1 )
+function [ I,S,I_D ] = render_DS( N_v,w_o,n,rho_s,alb,r,Light_sh,is_face,delta_a,delta_s1,chrom )
 %RENDER_DS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -41,10 +41,16 @@ aziElev2aziIncl = @(dirs) [dirs(:,1) pi/2-dirs(:,2)];
 [rec_pts_az,rec_pts_el] = cart2sph(N_v(1,:),N_v(2,:),N_v(3,:));
 rec_pts = aziElev2aziIncl([rec_pts_az' rec_pts_el']);
 
+R_v = 2*repmat(dot(repmat(w_o,1,size(N_v,2)),N_v),3,1).*N_v-repmat(w_o,1,size(N_v,2));
+[rot_pts_az,rot_pts_el] = cart2sph(R_v(1,:),R_v(2,:),R_v(3,:));
+rot_pts = aziElev2aziIncl([rot_pts_az' rot_pts_el']);
+
+Y_N = getSH(8, [rec_pts; rot_pts], 'real');
+
 n_air = 1;
 n_skin = 1.38;
 % Diffuse (BSSRDF)
-Nord = 10;
+Nord = 8;
 [~, tdesign_grid] = getTdesign(2*Nord);
 tdesign_grid = aziElev2aziIncl(tdesign_grid); % convert to azi-incl
 Ft_sh = max(cos(tdesign_grid(:,2)),0).*fresnel_trans(tdesign_grid(:,2),n_air,n_skin,1);
@@ -79,7 +85,11 @@ end
 if numel(Light_sh)<numel(E_lm)
     Light_sh(numel(E_lm)) = 0;
 end
+% in = inverseSHT_my(E_lm.*Light_sh, [], 'real',Y_N(1:size(rec_pts,1),:));
 in = inverseSHT(E_lm.*Light_sh, rec_pts, 'real');
+
+% in = inverseSHT(E_lm.*Light_sh, rec_pts, 'real');
+
 % im = (E_lm'.*Light_sh)*Y;
 % in = reshape(in,size(N,1),size(N,2));
 % figure;
@@ -94,10 +104,11 @@ Ft_o_v(isnan(Ft_o_v))=0;
 Ft_o = zeros(size(is_face));
 Ft_o(is_face) = Ft_o_v;
 for clr=1:3
-    [~,Pdr_filt]=bssdf([],[],r,clr,delta_a,delta_s1);
-    D(:,:,clr) = 4*conv2(Ft_o.*in_integ,Pdr_filt*r^2,'same');
+    [~,Pdr_filt]=bssdf([],[],r,clr,max(delta_a,0),max(delta_s1,0));
+    Pdr_filt = Pdr_filt(2:end-1,2:end-1);
+    D(:,:,clr) = 4*conv2(Ft_o.*in_integ.*alb(:,:,clr),Pdr_filt*r^2,'same')*chrom(clr,:);
 end
-
+D(D<0) = 0;
 % Specular (Blinn-Phong)
 % Nord = 10;
 % aziElev2aziIncl = @(dirs) [dirs(:,1) pi/2-dirs(:,2)];
@@ -184,11 +195,9 @@ end
 
 %% SH specular - approach 2
 %
-R_v = 2*repmat(dot(repmat(w_o,1,size(N_v,2)),N_v),3,1).*N_v-repmat(w_o,1,size(N_v,2));
-[rot_pts_az,rot_pts_el] = cart2sph(R_v(1,:),R_v(2,:),R_v(3,:));
-rot_pts = aziElev2aziIncl([rot_pts_az' rot_pts_el']);
 
-Nord = 10;
+
+Nord = 8;
 l = zeros((Nord+1)^2,1);
 for i=0:Nord
     l(i^2+1:(i+1)^2) = i;
@@ -198,9 +207,14 @@ n = repmat(n(:)',size(l,1),1);
 A_lm = exp(-l.^2/2./n);
 
 E_lm = repmat(Light_sh,1,size(A_lm,2)).*A_lm;
+% S_v = rho_s'.*inverseSHT_my(E_lm, rot_pts, 'real',Y_N(size(rec_pts,1)+1:end,:));
+Y_N = getSH(Nord,rot_pts,'real');
 S_v = rho_s'.*inverseSHT_my(E_lm, rot_pts, 'real');
+S_v = rho_s'.*inverseSHT_my(E_lm, [], 'real',Y_N);
 S = zeros(size(is_face));
 S(is_face) = S_v;
+S(S<0) = 0;
+
 % S reshros(size(is_face));
 % Seis_face)= S_s.*10;
 % 
@@ -281,7 +295,7 @@ S(is_face) = S_v;
 % figure;imshow(repmat(S,1,1,3) + repmat(naive_D,1,1,3)/1.4)
 % figure;imshow(repmat(S,1,1,3) + D);
 % figure;imshow(max(D,0).*alb + max(repmat(S,1,1,3),0))
-I = repmat(S,1,1,3) + alb.*D;
+I = repmat(S,1,1,3) + D;
 
 I_D = D;
 end
