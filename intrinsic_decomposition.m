@@ -195,8 +195,10 @@ J = sparse([r_1_1(:);r_1_2(:);r_1_3(:);r_2(:);r_3(:);r_4(:);r_5(:);r_6(:)...
 J(:,1:sz_fc) = 0;
 J(J>0) = 1;
 % J(:,1:sz_fc)=0;
+c2 = @(params)costfn_skin_model_2(params, D(is_face3),S(is_face),w_o,...
+    labels3,sz,is_face,is_face3,rad);
 costfn_opti = @(params)costfn_skin_model(params, z_ref(is_face),chrom_p,D(is_face3),S(is_face),w_o,...
-    labels3,wr,wc,alb_mean,alb_var,L_sh_mean,L_sh_var,n_mean,n_var,rho_var,rho_mean,iz_diff,sz,is_face,is_face3,rad );
+    labels3,wr,wc,alb_mean,alb_var,L_sh_mean,L_sh_var,n_mean,n_var,rho_var,rho_mean,iz_diff,sz,is_face,is_face3,rad,J,c2 );
 % J = sparse(27495,13747,-1,numel(cost),numel(params));
 algo = 'levenberg-marquardt';
 % algo =  {'levenberg-marquardt',.005};

@@ -1,4 +1,4 @@
-function [ cost,J ] = costfn_skin_model(params, z_ref,chrom_p,D,S,w_o,labels3,wr,wc,alb_mean,alb_var,L_sh_mean,L_sh_var,n_mean,n_var,rho_mean,rho_var,iz_diff,sz,is_face,is_face3,r )
+function [ cost,J ] = costfn_skin_model(params, z_ref,chrom_p,D,S,w_o,labels3,wr,wc,alb_mean,alb_var,L_sh_mean,L_sh_var,n_mean,n_var,rho_mean,rho_var,iz_diff,sz,is_face,is_face3,r,J,c2 )
 %COSTFN_SKIN_MODEL Summary of this function goes here
 %   Detailed explanation goes here
 try
@@ -140,6 +140,36 @@ end
 catch err
     disp(1)
 end
+% 
+% running = 1;
+% J_small = J(1:numel([cost_data_diffuse*20; cost_data_spec]),:);
+% calls = 0;
+% 
+% while(nnz(J_small)>0)
+%     calls = calls+1;
+%     disp(calls)
+% J2 = J_small>0;
+% vars = zeros(1,size(J_small,1));
+% rows = zeros(1,size(J_small,1));
+% rows = [];
+% tic
+% ind = 0;
+% while(nnz(J_small)>0)
+%     ind = ind+1;
+%     [c,r] = find(J2',1,'first');
+%     if isempty(c)
+%         break
+%     end
+%     vars(ind) = c;
+%     rows(ind) = r;
+%     J_small(r,c) = 0;
+%     J2(:,J2(r,:)) = 0;        
+% end
+% vars(ind+1:end)=[];
+% rows(ind+1:end)=[];
+% toc
+% end
+
 % cost = cost*0;
 % cost(27495)=1-params(13748);
 end
