@@ -217,18 +217,24 @@ end
 p_new = n_new(:,:,1).*N_ref_new;
 q_new = n_new(:,:,2).*N_ref_new;
 % 
-im_c = imresize(im_c,0.3);
-depth = imresize(depth,0.3)*0.3;
-labels = imresize(labels,0.3,'nearest');
-dmap_ref = imresize(dmap_ref,0.3);
-eye_mask = imresize(eye_mask,0.3,'nearest');
+sc = 0.6;
+im_c = imresize(im_c,sc);
+depth = imresize(depth,sc)*sc;
+labels = imresize(labels,sc,'nearest');
+dmap_ref = imresize(dmap_ref,sc);
+eye_mask = imresize(eye_mask,sc,'nearest');
 is_face = ~isnan(depth);
 is_face = remove_bad_boundary(is_face);
-scalez = scalez/0.3;
+scalez = scalez/sc;
 
-intrinsic_decomposition(im_c,depth,labels,(~isnan(dmap_ref).*eye_mask)>0,...
+intrinsic_decomposition(imadjust(im_c,[0 1],[0 1],0.7),depth,labels,(~isnan(dmap_ref).*eye_mask)>0,...
     is_face,scalez*1000);
 
+
+im2=imadjust(im_c,[0 1],[0 1],0.7);
+chrom = reshape(im2,[],3);
+chrom = chrom./repmat(sqrt(sum(chrom.^2,2)),1,3);
+chrom = reshape(chrom,size(im2));
 figure;
 
 if is_alb_opt

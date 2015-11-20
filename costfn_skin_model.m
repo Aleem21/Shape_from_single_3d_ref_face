@@ -104,7 +104,7 @@ cost_chrom_n = (norm(chrom)-1);
 %% Albedo normalization
 % cost_alb_n = sum((alb(is_face3)).^2)/sz(1)*50 - 1;
 cost_alb_n = norm(alb(is_face3))/sz(1)*50 - 1;
-cost_alb_n = sum(alb(is_face3))*10/sz(1) - 1;
+% cost_alb_n = alb(is_face3)*10/sz(1) - 1;
 
 
 lamb_fp = sqrt(0);
@@ -129,15 +129,15 @@ lamb_zp = sqrt(0);
 % lamb_hp = sqrt(0.5);
 % lamb_hc = sqrt(10);
 % lamb_zp = sqrt(0.0001);
-lamb_fp = sqrt(0.001);
+lamb_fp = sqrt(0.001)*0;
 lamb_hs = sqrt(100)*0;
-lamb_ln = sqrt(10)*0;
+lamb_ln = sqrt(10);
 lamb_fs = sqrt(100);
 lamb_lp = sqrt(0.01)*0;
 lamb_lsh = sqrt(1)*0;
 lamb_hp = sqrt(0.5)*0;
 lamb_hc = sqrt(0.1)*0;
-lamb_fn = sqrt(100);
+lamb_fn = sqrt(100)*0;
 lamb_diff = 5;
 lamb_spec = 0;
 if type
@@ -150,7 +150,7 @@ end
 cost = [cost_data_diffuse*lamb_diff; cost_data_spec*lamb_spec ;cost_alb_p*lamb_fp;...
     cost_alb_s*lamb_fs; cost_n_p*lamb_hp; cost_n_s*lamb_hs;...
     cost_c*lamb_hc; cost_geo_p*lamb_zp; cost_geo_s*lamb_zs; ...
-    cost_illum_p*lamb_lp; cost_illum_sh*lamb_lsh*0; cost_illum_n*lamb_ln;...
+    cost_illum_p*lamb_lp; cost_illum_sh*lamb_lsh; cost_illum_n*lamb_ln;...
     cost_chrom_n*lamb_ln; cost_alb_n*lamb_fn];
 
 if sum(~isreal(cost))>0
@@ -207,7 +207,7 @@ if nargout >1
     %d(diffuse)/d(P)
     r_d_P = 1:sz(1)*3;
     c_d_P = ones(sz(1)*3,1)*numel(params);
-    v_d_P = lamb_diff*D_r/P;
+    v_d_P = lamb_diff*D_r/P*0;
     
     %d(specular)/d(n)
     r_s_n = sz(1)*3+(1:sz(1));
@@ -387,6 +387,8 @@ end
 catch err
     disp('Something went wrong in cost function calculation')
 end
+% cost = cost'*cost;
+% J = sum(J);
 end
 
 
