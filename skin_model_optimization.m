@@ -113,7 +113,7 @@ J(J>0) = 1;
 
 % algo =  {'levenberg-marquardt',.005};
 algo = 'trust-region-reflective';
-options = optimset('MaxIter',15,'JacobPattern',J,'Display','iter-detailed','Algorithm',algo,'Jacobian','on');
+options = optimset('MaxIter',5,'JacobPattern',J,'Display','iter-detailed','Algorithm',algo,'Jacobian','on');
 
 costfn_opti = @(params)costfn_skin_model(params, z_ref(is_face),chrom_p,D(is_face3),S(is_face),w_o,...
     labels3,wr,wc,alb_mean,alb_var,L_sh_mean,L_sh_var,n_mean,n_var,rho_var,rho_mean,iz_diff,sz,is_face,is_face3,rad,type,inds3x3,options );
