@@ -76,8 +76,8 @@ for r = 1:10
 end
 S = S * rgb2gray(reshape(chrom_light,1,1,3));
 D = im - repmat(S,1,1,3);
-% gauss = fspecial('gaussian',3,1);
-% D = convn(D,gauss,'same');
+gauss = fspecial('gaussian',3,1);
+D = convn(D,gauss,'same');
 D(D<0) = 0;
 end
 % im_v = im(:);

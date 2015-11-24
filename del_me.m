@@ -1,7 +1,28 @@
-[ z_o,alb_o,n_o,rho_o,L_sh_o,chrom_o,delta_a_o,delta_s1_o,P_o ] = ...
-    skin_model_optimization( is_face,L_sh_mean,L_sh_var,z_ref,chrom_p,...
-    alb_init,n_init,rho_init,L_sh_init,D,S,w_o,labels,im,alb_mean_cell,...
-    alb_var,n_mean,n_var,rho_mean,rho_var,delta_a_init,delta_s1_init,P_init,rad,0 );
+% optimum = lsqnonlin(costfn_opti,params,[],[],options);
+
+% tic
+% J = sparse(1:100000,1,1,100000,100000);
+% toc
+
+J = spalloc(10000,10000,100000);
+t = zeros(1,5);
+tic
+tic
+for i=1:20
+    J((i-1)*5000 + (1:5000),1) = 1;
+    t(i)=toc;
+end
+figure;plot(t)
+for i=1:100
+    tic
+    J = sparse(1:50000,1,1,100000+(i-1)*10000,100000+(i-1)*10000);
+    t2(i) = toc;
+end
+figure;plot(t2)
+% [ z_o,alb_o,n_o,rho_o,L_sh_o,chrom_o,delta_a_o,delta_s1_o,P_o ] = ...
+%     skin_model_optimization( is_face,L_sh_mean,L_sh_var,z_ref,chrom_p,...
+%     alb_init,n_init,rho_init,L_sh_init,D,S,w_o,labels,im,alb_mean_cell,...
+%     alb_var,n_mean,n_var,rho_mean,rho_var,delta_a_init,delta_s1_init,P_init,rad,0 );
 
 % running = 1;
 % J_small = J(1:numel([cost_data_diffuse*20; cost_data_spec]),:);

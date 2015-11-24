@@ -29,7 +29,10 @@ n_skin = 1.38;
 Nord = 8;
 [~, tdesign_grid] = getTdesign(2*Nord);
 tdesign_grid = aziElev2aziIncl(tdesign_grid); % convert to azi-incl
-Ft_sh = max(cos(tdesign_grid(:,2)),0).*fresnel_trans(tdesign_grid(:,2),n_air,n_skin,1);
+% Ft_sh = max(cos(tdesign_grid(:,2)),0).*fresnel_trans(tdesign_grid(:,2),n_air,n_skin,1);
+% Ft_sh = cos(tdesign_grid(:,2))>0;
+Ft_sh = (cos(tdesign_grid(:,2))>0).*fresnel_trans(tdesign_grid(:,2),n_air,n_skin,1);
+
 Ft_sh_coeff = directSHT(Nord, Ft_sh, tdesign_grid, 'real', []);
 l = zeros((Nord+1)^2,1);
 for i=0:Nord
@@ -55,9 +58,10 @@ Ft_o_v(isnan(Ft_o_v))=0;
 Ft_o = zeros(size(is_face));
 Ft_o(is_face) = Ft_o_v;
 for clr=1:3
-    [~,Pdr_filt{clr}]=bssdf([],[],r,clr,max(delta_a,0),max(delta_s1,0));
+    [~,Pdr_filt{clr}]=bssdf([],[],r,1,max(delta_a,0),max(delta_s1,0));
     Pdr_filt{clr} = Pdr_filt{clr}(2:end-1,2:end-1);
-    D(:,:,clr) = 4*conv2(Ft_o.*in_integ.*alb(:,:,clr),Pdr_filt{clr}*r^2,'same')*chrom(clr,:);
+%     D(:,:,clr) = 4*conv2(Ft_o.*in_integ.*alb(:,:,clr),Pdr_filt{clr}*r^2,'same')*chrom(clr,:);
+    D(:,:,clr) = 4*conv2(in_integ,Pdr_filt{clr}*r^2,'same')*chrom(clr,:).*alb(:,:,clr).*Ft_o;
 end
 if nargout > 3
     alpha = in_integ.*Ft_o.*r^2;
