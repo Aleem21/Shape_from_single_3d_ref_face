@@ -1,7 +1,7 @@
 function [ z_o,alb_o,n_o,rho_o,L_sh_o,chrom_o,delta_a_o,delta_s1_o,P_o ] =...
     skin_model_optimization( is_face,L_sh_mean,L_sh_var,z_ref,chrom_p,...
     alb_init,n_init,rho_init,L_sh_init,D,S,w_o,labels,im,alb_mean,alb_var,...
-    n_mean,n_var,rho_mean,rho_var,delta_a_init,delta_s1_init,P_init,rad,type )
+    n_mean,n_var,rho_mean,rho_var,delta_a_init,delta_s1_init,P_init,rad,mask,type )
 %SKIN_MODEL_OPTIMIZATION Summary of this function goes here
 %   Detailed explanation goes here
 is_face3 = repmat(is_face,1,1,3);
@@ -31,16 +31,23 @@ wr{1} = (1 + (labels(:,1:end-1)~=labels(:,2:end))*0.5).*is_face(:,1:end-1).*is_f
 wr{1} = wr{1}(:);
 wr{2} = (1 + (labels(2:end,:)~=labels(1:end-1,:))*0.5).*is_face(1:end-1,:).*is_face(2:end,:);
 wr{2} = wr{2}(:);
-
-chrom = reshape(im,[],3);
+im2 = im.^(1/2.2);
+chrom = reshape(im2,[],3);
 chrom = chrom./repmat(sqrt(sum(chrom.^2,2)),1,3);
-chrom = reshape(chrom,size(im));
+chrom = reshape(chrom,size(im2));
 chroml = reshape(chrom(:,1:end-1,:),[],3);
 chromr = reshape(chrom(:,2:end,:),[],3);
-wc{1} = (1 - (dot(chroml',chromr')<0.9)*0.6);
+wc{1} = zeros(size(im2,1),size(im2,2)-1);
+wc{1}(:) = (1 - (dot(chroml',chromr')<0.6)*0.4);
+wc{1} = wc{1}.*double(mask(:,1:end-1));
+wc{1} = wc{1}(:);
 chromt = reshape(chrom(1:end-1,:,:),[],3);
 chromb = reshape(chrom(2:end,:,:),[],3);
-wc{2} = (1 - (dot(chromt',chromb')<0.9)*0.6);
+% wc{2} = (1 - (dot(chromt',chromb')<0.6)*0.4);
+wc{2} = zeros(size(im2,1)-1,size(im2,2));
+wc{2}(:) = (1 - (dot(chromt',chromb')<0.6)*0.4);
+wc{2} = wc{2}.*double(mask(1:end-1,:));
+wc{2} = wc{2}(:);
 
 
 
@@ -58,11 +65,12 @@ iz_diff = zeros(15,sum(is_face(:)));
 iz_spec = zeros(3,sum(is_face(:)));
 iz_alb = zeros(9,sum(is_face(:)));
 inds3x3 = zeros(9,sum(is_face(:)));
+try
 for i=1:sum(is_face(:))
     %     belems4x4 = sub2ind_face(sub2ind(size(is_face),min(max(bboxr(2:end)+r_face(i),1),size(is_face,1)),min(max(bboxc(2:end)+c_face(i),1),size(is_face,2))));
     elems4x4 = sub2ind_face(sub2ind(size(is_face),min(max(boxr(2:end)+r_face(i),1),size(is_face,1)),min(max(boxc(2:end)+c_face(i),1),size(is_face,2))));
     
-    elems3x3 = sub2ind_face(sub2ind(size(is_face),boxr3(:)+r_face(i),boxc3(:)+c_face(i)));
+    elems3x3 = sub2ind_face(sub2ind(size(is_face),min(max(boxr3(:)+r_face(i),1),size(is_face,1)),min(max(boxc3(:)+c_face(i),1),size(is_face,2))));
     iz_spec(:,i) = elems4x4([6 9 10]) + elems4x4([14 11 10]).*(elems4x4([6 9 10])==0);
     elems4x4(elems4x4==0) = repmat(elems4x4(10),sum(elems4x4==0),1);
     
@@ -72,6 +80,9 @@ for i=1:sum(is_face(:))
     inds3x3(:,i) = elems3x3nan;
     elems3x3(elems3x3==0) = repmat(elems3x3(5),sum(elems3x3==0),1);
     iz_alb(:,i) = elems3x3;
+end
+catch err
+    error( 'Something went wrong')
 end
 
 % Diffuse data term
@@ -113,10 +124,10 @@ J(J>0) = 1;
 
 % algo =  {'levenberg-marquardt',.005};
 algo = 'trust-region-reflective';
-options = optimset('MaxIter',15,'JacobPattern',J,'Display','iter-detailed','Algorithm',algo,'Jacobian','on');
+options = optimset('MaxIter',25,'JacobPattern',J,'Display','iter-detailed','Algorithm',algo,'Jacobian','on');
 
 costfn_opti = @(params)costfn_skin_model(params, z_ref(is_face),chrom_p,D(is_face3),S(is_face),w_o,...
-    labels3,wr,wc,alb_mean,alb_var,L_sh_mean,L_sh_var,n_mean,n_var,rho_var,rho_mean,iz_diff,sz,is_face,is_face3,rad,type,inds3x3,options );
+    labels3,wr,wc,alb_mean,alb_var,L_sh_mean,L_sh_var,n_mean,n_var,rho_var,rho_mean,iz_diff,sz,is_face,is_face3,rad,type,inds3x3,mask,options );
 % contsfn = inline('0');
 % options = optimoptions('fminunc','GradObj','on','Display','iter-detailed');
 % optimum = fmincon(costfn_opti,params,ones(1,numel(params)),1,[],[],[],[],[],options);
@@ -125,6 +136,7 @@ costfn_opti = @(params)costfn_skin_model(params, z_ref(is_face),chrom_p,D(is_fac
 optimum = lsqnonlin(costfn_opti,params,[],[],options);
 
 figure;plot(params-optimum);
+title('delta_param')
 z_o = nan(size(z_ref));
 z_o(is_face) = optimum(1:sz_fc);
 alb_o = zeros(size(im));
@@ -142,6 +154,7 @@ P_o = optimum(end);
 
 % options = optimset('MaxIter',2);
 figure;
+title('Initial and final cost comparison')
 subplot(2,1,1);
 ci = costfn_opti(params).^2;
 plot(ci);

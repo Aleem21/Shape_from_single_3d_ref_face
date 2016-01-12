@@ -4,30 +4,30 @@ function [ labels ] = mark_regions( lm,im )
 chin = csapi(lm(1,2:12),lm(2,2:12));
 
 l_eye_top = csapi(lm(1,31:35),lm(2,31:35));
-l_eye_bot = csapi(lm(1,[35:38 31]),lm(2,[35:38 31]));
+% l_eye_bot = csapi(lm(1,[35:38 31]),lm(2,[35:38 31]));
 l_eyeb_bot = csapi(lm(1,19:22),lm(2,19:22));
 l_eyeb_top = csapi(lm(1,[22 17:19]),lm(2,[22 17:19]));
-l_eyel_l = [23 41];
-l_eyel_r = [23 41];
+% l_eyel_l = [23 41];
+% l_eyel_r = [23 41];
 
 r_eye_top = csapi(lm(1,41:45),lm(2,41:45));
-r_eye_bot = csapi(lm(1,[45:48 41]),lm(2,[45:48 41]));
+% r_eye_bot = csapi(lm(1,[45:48 41]),lm(2,[45:48 41]));
 
 r_eyeb_top = csapi(lm(1,23:26),lm(2,23:26));
 r_eyeb_bot = csapi(lm(1,[26:28 23]),lm(2,[26:28 23]));
-nose_r_top = csapi(lm(1,[23 49]),lm(2,[23 49]));
-nose_l_top = csapi(lm(1,[22 51]),lm(2,[22 51]));
+% nose_r_top = csapi(lm(1,[23 49]),lm(2,[23 49]));
+% nose_l_top = csapi(lm(1,[22 51]),lm(2,[22 51]));
 nose_bot = csapi(lm(1,[52 54 56:58]),lm(2,[52 54 56:58]));
 nose_r_bot = csapi(lm(2,[49 55 56]),lm(1,[49 55 56]));
 nose_l_bot = csapi(lm(2,[51 58 59]),lm(1,[51 58 59]));
-must_l = csapi(lm(1,[59 60]),lm(2,[59 60]));
-must_r = csapi(lm(1,[55 66]),lm(2,[55 66]));
+% must_l = csapi(lm(1,[59 60]),lm(2,[59 60]));
+% must_r = csapi(lm(1,[55 66]),lm(2,[55 66]));
 beard = csapi(lm(1,[4 60:66 10]),lm(2,[4 60:66 10]));
 
-chin_left = csapi(lm(1,[6 76]),lm(2,[6 76]));
-chin_right = csapi(lm(1,[8 74]),lm(2,[8 74]));
-chin_top = [74 76];
-chin_bot = [6 8];
+% chin_left = csapi(lm(1,[6 76]),lm(2,[6 76]));
+% chin_right = csapi(lm(1,[8 74]),lm(2,[8 74]));
+% chin_top = [74 76];
+% chin_bot = [6 8];
 lip_top = csapi(lm(1,60:66),lm(2,60:66));
 lip_bot = csapi(lm(1,[66 73:77 60]),lm(2,[66 73:77 60]));
 

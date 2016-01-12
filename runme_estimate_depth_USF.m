@@ -51,6 +51,10 @@ internet = 1;
 internet_path = '.\data\internet\';
 internet_imgs = {'paper small.png'};
 
+raw = 1;
+raw_path = '.\data\RAW\';
+raw_imgs = {'mahmood2.cr2'};
+
 % USF images path
 folder_path = '.\data\USF_images\';
 
@@ -68,7 +72,13 @@ talk = 4;
 i=1;
 impath = [folder_path impaths{i}];
 %% make image
-if ~internet
+if raw
+    im_c = imread_raw([raw_path raw_imgs{i}]);
+    mask = double(imread([raw_path raw_imgs{i}(1:end-4) '_mask.tiff'])>0);
+    mask = mask(:,:,1);
+    im_c = imresize(im_c,0.07);
+    im_c = im_c .*repmat(imresize(mask,[size(im_c,1) size(im_c,2)]),1,1,3);
+elseif ~internet
     % choose some spherical harmonic coefficients for image synthesis
     sh_coeff = [0.0 0.6 0.5 -1.3]/1.2;
     x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
@@ -91,6 +101,7 @@ if ~internet
 else
     im_c = im2double(imread([internet_path internet_imgs{i}]));
 end
+
 im = rgb2gray(im_c);
 if ~is_albedo
     im = im_c(:,:,1);
@@ -110,15 +121,16 @@ end
 
 %% Compute pose
 % Is the face fronto parallel?
-restrictive = 1;
-[Rpose, Scale] = compute_pose_USF(landmarks, talk, im,restrictive);
+restrictive = 0;
+cRes = size(im,2)*0+512;
+rRes = size(im,1)*0+512;
+[Rpose, Scale] = compute_pose_USF(landmarks, talk, im,restrictive,cRes,rRes);
 
 % Rpose = Rpose/R;
 %% generate ref depth map
 ply_path = '.\data\ref_model.ply';
 dataset_path = '..\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test';
-cRes = size(im,2);
-rRes = size(im,1);
+
 [dmap_ref, n_ref, N_ref, alb_ref,eye_mask,scalez] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,dataset_path,talk);
 N_ref(isnan(im))=nan;
 %     N_gnd(isnan(N_ref))=NaN;
@@ -155,6 +167,7 @@ title(sprintf('Ambient, lin\n A: %.0f, E: %.0f',A_est_amb_lin,E_est_amb_lin));
 %% Flow computation
 % render reference model for flow computations between this rendering and
 % input image
+% l_est_amb_lin = l_est_amb_lin;
 im_rendered = render_model_noGL(n_ref,l_est_amb_lin,alb_ref,0);
 alb_ref2 = alb_ref;
 if flow
@@ -163,7 +176,7 @@ if flow
     % number of iterations of flow on each level
     n_iters = 1;
     % do morphing before optical flow?
-    morph = 1;
+    morph = 0;
     dmap_ref_old = dmap_ref;
     [alb_ref2,dmap_ref,eye_mask]=compute_flow(im,im_rendered,landmarks,...
         alb_ref,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
@@ -176,6 +189,15 @@ dmap_ref(isnan(alb_ref2)) = nan;
 dmap_ref(isnan(im))=nan;
 dmap_ref(dmap_ref==0) = nan;
 
+n_ref = normal_from_depth(dmap_ref);
+
+is_ambient = 1;
+non_lin = 0;
+l_est_amb_lin = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin);
+x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
+A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
+
+
 %% Optimization
 %     im(isnan(im)) = 0;
 if combined
@@ -186,7 +208,11 @@ if combined
     alb_render = alb/255;
     title('estimated albedo')
 elseif is_alb_opt
-    [depth,alb,is_face] = estimate_depth_nonlin(alb_ref2*0+255,im*255,dmap_ref,l_est_amb_lin,...
+    im_inp = im;
+    if raw
+        im_inp = im.^(1/2.2);
+    end
+    [depth,alb,is_face] = estimate_depth_nonlin(alb_ref2*255,im_inp*255,dmap_ref,l_est_amb_lin,...
         lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_dz_depth,lambda_dz,[],algo,0);
     figure;imshow(alb/255);
     alb_render = alb/255;
@@ -202,7 +228,12 @@ is_face = remove_bad_boundary(is_face)>0;
 %% Display results
 alb_render = max(alb_render,0);
 figure;
-depth_s=surf(depth,im_c,'edgealpha',0,'facecolor','interp');axis equal
+im_c(im_c<0) = 0;
+im_inp_c = im_c;
+if raw
+    im_inp_c = im_c.^(1/2.2);
+end
+depth_s=surf(depth,im_inp_c,'edgealpha',0,'facecolor','interp');axis equal
 colormap 'gray';
 phong.shading(depth_s);
 title('Estimated Depth')
@@ -217,18 +248,29 @@ end
 p_new = n_new(:,:,1).*N_ref_new;
 q_new = n_new(:,:,2).*N_ref_new;
 % 
-sc = 0.6;
-im_c = imresize(im_c,sc);
-depth = imresize(depth,sc)*sc;
-labels = imresize(labels,sc,'nearest');
-dmap_ref = imresize(dmap_ref,sc);
-eye_mask = imresize(eye_mask,sc,'nearest');
-is_face = ~isnan(depth);
-is_face = remove_bad_boundary(is_face);
-scalez = scalez/sc;
+% save('state_aunty.mat');
+% sc = 0.6;
+% im_c = imresize(im_c,sc);
+% depth = imresize(depth,sc)*sc;
+% labels = imresize(labels,sc,'nearest');
+% dmap_ref = imresize(dmap_ref,sc);
+% eye_mask = imresize(eye_mask,sc,'nearest');
+% is_face = ~isnan(depth);
+% is_face = remove_bad_boundary(is_face);
+% scalez = scalez/sc;
+im_c(im_c<0) = 0;
+if raw
+    inp_im_c = im_c;
+else
+    inp_im_c = im_c.^(2.2);
+end
+[z_o,alb_o,L_sh_o]=intrinsic_decomposition(inp_im_c,depth,labels,(~isnan(dmap_ref).*eye_mask)>0,...
+    scalez*1000);
 
-intrinsic_decomposition(imadjust(im_c,[0 1],[0 1],0.7),depth,labels,(~isnan(dmap_ref).*eye_mask)>0,...
-    is_face,scalez*1000);
+alb_o(alb_o<0)=0;
+figure;
+depth_s=surf(z_o,alb_o.^(1/2.2)*2,'edgealpha',0,'facecolor','interp');axis equal
+phong.shading(depth_s);
 
 
 im2=imadjust(im_c,[0 1],[0 1],0.7);
@@ -284,5 +326,9 @@ l_new = estimate_lighting(n_new,alb_ref2,im,4,0,is_ambient,non_lin);
 
 frameRate = 10;
 speed = 5;
-span = 1.5;
-do_relighting( im_c,l_new,n_new,frameRate,speed,span)
+span = 0.5;
+if raw
+    do_relighting_linear( im_c,l_new,n_new,frameRate,speed,span)
+else
+    do_relighting( im_c,l_new,n_new,frameRate,speed,span)
+end

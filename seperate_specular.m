@@ -32,6 +32,7 @@ for n_i = 1:10
         continue
     end
     [~,~,V] = svd(clrs_r, 0);
+    V = real(V);
 %     no=3;%smallest number of points required
 %     k=50;%number of iterations
 %     t=1;%threshold used to id a point that fits well
@@ -48,7 +49,7 @@ for n_i = 1:10
     dif_mag_r(repmat(dif_mag_r==0,1,3))=[];
     dif_chrom_r = dif_colors_r./repmat(dif_mag_r,1,3);
     mean_dif_chrom = [mean_dif_chrom;dif_chrom_r];
-    mean_dif_chrom_r(:,n_i) = mean(dif_chrom_r)';
+    mean_dif_chrom_r(:,n_i) = mean(dif_chrom_r,1)';
 end
 mean_dif_chrom = mean(mean_dif_chrom)';
 costfn = @(chr)costfn_plankian(chr,N);
@@ -76,8 +77,8 @@ for r = 1:10
 end
 S = S * rgb2gray(reshape(chrom_light,1,1,3));
 D = im - repmat(S,1,1,3);
-gauss = fspecial('gaussian',3,1);
-D = convn(D,gauss,'same');
+% gauss = fspecial('gaussian',3,1);
+% D = convn(D,gauss,'same');
 D(D<0) = 0;
 end
 % im_v = im(:);

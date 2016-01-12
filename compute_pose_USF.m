@@ -1,4 +1,4 @@
-function [ sRT,S,sT ] = compute_pose_USF( pp,talk,im,restrictive)
+function [ sRT,S,sT ] = compute_pose_USF( pp,talk,im,restrictive,cRes,rRes)
 
 if nargin<2
     talk = 0;
@@ -7,13 +7,12 @@ if nargin < 4
     restrictive = 0;
 end
 [pts,tri,rgb] = read_USF_eko('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test',512,512);
-cRes = 1000;
-rRes = 1000;
+
 [rendered,z] = render_rgb_USF(pts,tri,rgb,rRes,cRes);
 z = double(z)*min(rRes,cRes)/2;
 landmarks_ref = stasm_tracker(rendered,talk);
 valid = 17:77;
-landmarks_3D_ref = px_to_3d_USF(landmarks_ref(:,valid),z,1000,1000);
+landmarks_3D_ref = px_to_3d_USF(landmarks_ref(:,valid),z,cRes,rRes);
 pp = pp(:,valid);
 
 %% data conditioning
@@ -58,6 +57,10 @@ if talk
     end
     
 end
+
+
+
+
 
 end
 

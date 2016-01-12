@@ -37,10 +37,10 @@ black_eyes = 1;
 %% data conditioning
 
 %pose correction
-pts_rotated = Rpose*[pts; ones(1,size(pts,2))];
+pts_rotated = Rpose*[pts([1 2 3],:); ones(1,size(pts,2))];
 pts_rotated = pts_rotated(1:3,:);
 pts_rotated(3,:) = pts(3,:)*min(Scale);
-
+pts_rotated = pts_rotated([1 2 3],:);
 
 
 %% generate depth map by calling mex file

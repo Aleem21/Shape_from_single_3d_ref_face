@@ -1,6 +1,6 @@
 function [ cost,J ] = costfn_skin_model(params, z_ref,chrom_p,D,S,w_o,...
     labels3,wr,wc,alb_mean,alb_var,L_sh_mean,L_sh_var,n_mean,n_var,...
-    rho_mean,rho_var,iz_diff,sz,is_face,is_face3,r,type,inds3x3,options )
+    rho_mean,rho_var,iz_diff,sz,is_face,is_face3,r,type,inds3x3,mask,options )
 %COSTFN_SKIN_MODEL Summary of this function goes here
 %   Detailed explanation goes here
 try
@@ -23,11 +23,11 @@ N = normal_from_depth(z2);
 N_v = reshape(N(is_face3),[],3);
 [~,S_r,D_r,alpha,P_dr,Yi,Ft_o,E_lm,d_S_n,l_i,Y_N]=render_DS(N_v',w_o,n,rho_s,alb,r,L_sh,is_face,delta_a,delta_s1,chrom);
 %% Data cost
-S_r = S_r(is_face);
-D_r = D_r(is_face3);
-cost_data_spec= S_r(:)-S(:);
+D_r = D_r(is_face3);S_r = S_r(is_face);
+
+cost_data_spec= (S_r(:)-S(:)).*(mask(is_face));
 % cost_data_spec = cost_data_spec;
-cost_data_diffuse = D_r(:)-D(:);
+cost_data_diffuse = (D_r(:)-D(:)).*(repmat(mask(is_face),3,1));
 % cost_data = sum(cost_data_diffuse) + sum(cost_data_spec.^2);
 %% Albedo cost
 % prior
@@ -46,7 +46,7 @@ cost_alb_p = (cost_alb_p).^0.5;
 % right neighbour
 alb1 = reshape(alb(:,1:end-1,:)-alb(:,2:end,:),[],3);
 % neg_cost1 = sum( max(-reshape(alb(:,1:end-1,:),[],3),0),2) + sum( max(-reshape(alb(:,2:end,:),[],3),0),2);
-alb1 = sum(alb1'.^2).*wc{1}.*wr{1}';
+alb1 = sum(alb1'.^2).*wc{1}'.*wr{1}';
 alb1 = [reshape(alb1,size(alb,1),size(alb,2)-1) zeros(size(alb,1),1) ];
 alb1 = alb1(is_face);
 % left neighbour
@@ -58,7 +58,7 @@ alb2 = [];
 % bot neighbour
 alb3 = reshape(alb(1:end-1,:,:)-alb(2:end,:,:),[],3);
 % neg_cost3 = sum( max(-reshape(alb(1:end-1,:,:),[],3),0),2) + sum( max(-reshape(alb(2:end,:,:),[],3),0),2);
-alb3 = sum(alb3'.^2).*wc{2}.*wr{2}';
+alb3 = sum(alb3'.^2).*wc{2}'.*wr{2}';
 alb3 = [reshape(alb3,size(alb,1)-1,size(alb,2)); zeros(1,size(alb,2))];
 alb3 = alb3(is_face);
 
@@ -98,7 +98,7 @@ cost_c = sqrt(sum((delta_a-sc.*delta_s1-ic).^2));
 cost_illum_p = chrom-chrom_p;
 L_c = L_sh/P-L_sh_mean;
 cost_illum_sh = (L_c'/L_sh_var*L_c).^0.5;
-cost_illum_n = (norm(chrom)-1)*0 + (norm(L_sh/P)-1) + sum(sum(max(-sh2sph(L_sh/P,[50 50]),0)))/5*0 ;
+cost_illum_n = (norm(chrom)-1)*0 + ((sqrt(sum([L_sh(1)^2*2; L_sh(2:end).^2]))/P)-2) + sum(sum(max(-sh2sph(L_sh/P,[50 50]),0)))/5*0 ;
 cost_chrom_n = (norm(chrom)-1);
 
 %% Albedo normalization
@@ -107,16 +107,6 @@ cost_chrom_n = (norm(chrom)-1);
 cost_alb_n = alb(is_face3)*10/sz(1) - 1;
 
 
-lamb_fp = sqrt(0);
-lamb_hs = sqrt(0);
-lamb_zs = sqrt(0);
-lamb_ln = sqrt(0);
-lamb_fs = sqrt(0);
-lamb_lp = sqrt(0);
-lamb_lsh = sqrt(0);
-lamb_hp = sqrt(0);
-lamb_hc = sqrt(0);
-lamb_zp = sqrt(0);
 
 % lamb_fp = sqrt(10);
 % lamb_fp = sqrt(0.0001);
@@ -133,11 +123,11 @@ lamb_fp = sqrt(0.1)*0;
 lamb_hs = sqrt(100)*0;
 lamb_ln = sqrt(10000);
 lamb_fs = sqrt(1000);
-lamb_lp = sqrt(0.01)*0;
-lamb_lsh = sqrt(1);
+lamb_lp = sqrt(0.1);
+lamb_lsh = sqrt(0.01)*0;
 lamb_hp = sqrt(0.5)*0;
 lamb_hc = sqrt(0.1)*0;
-lamb_fn = sqrt(100)*0;
+% lamb_fn = sqrt(100)*0;
 lamb_diff = 5;
 lamb_spec = 0;
 if type
@@ -151,10 +141,10 @@ cost = [cost_data_diffuse*lamb_diff; cost_data_spec*lamb_spec ;cost_alb_p*lamb_f
     cost_alb_s*lamb_fs; cost_n_p*lamb_hp; cost_n_s*lamb_hs;...
     cost_c*lamb_hc; cost_geo_p*lamb_zp; cost_geo_s*lamb_zs; ...
     cost_illum_p*lamb_lp; cost_illum_sh*lamb_lsh; cost_illum_n*lamb_ln;...
-    cost_chrom_n*lamb_ln; cost_alb_n*lamb_fn];
+    cost_chrom_n*lamb_ln;];
 
 if sum(~isreal(cost))>0
-    disp(1)
+    error('non-real cost')
 end
 
 if nargout >1
@@ -182,7 +172,7 @@ if nargout >1
 %     v_db_alb = v_d_alb*chrom(3).*P_db_vec;
     r_d_alb = 1:sz(1)*3;
     c_d_alb = sz(1) + (1:sz(1)*3);
-    v_d_alb = D_r./alb(is_face3)*lamb_diff;
+    v_d_alb = D_r./alb(is_face3)*lamb_diff.*repmat(mask(is_face),3,1);
     % d(diffuse)/d(L_sh_coeff)
     L_sh_offset = sz(1)*6;
     r_dr_L = reshape(repmat(1:sz(1),numel(L_sh),1),[],1);
@@ -211,17 +201,17 @@ if nargout >1
     %d(specular)/d(n)
     r_s_n = sz(1)*3+(1:sz(1));
     c_s_n = sz(1)*4+(1:sz(1));
-    v_s_n = d_S_n*0;
+    v_s_n = d_S_n.*mask(is_face)';
     
     %d(specular)/d(rho)
     r_s_rho = r_s_n;
     c_s_rho = c_s_n + sz(1);
-    v_s_rho = S_r./rho_s*0;
+    v_s_rho = S_r./rho_s.*mask(is_face);
     
     %d(specular)/d(L_sh_coeff)
     r_s_L = repmat((1:sz(1))'+sz(1)*3,1,numel(L_sh));
     c_s_L = repmat((1:numel(L_sh))+sz(1)*6,sz(1),1);
-    v_s_L = repmat(rho_s,1,numel(L_sh)).*exp(-l_i'.^2./repmat(n,1,numel(L_sh))/2).*Y_N*P*0;
+    v_s_L = repmat(rho_s,1,numel(L_sh)).*exp(-l_i'.^2./repmat(n,1,numel(L_sh))/2).*Y_N*P;
     
     %d(specular)/d(P)
     r_s_P = (1:sz(1)) + sz(1)*3;
@@ -264,7 +254,7 @@ if nargout >1
     diffb = diffb(is_face);
     r_albs = sz(1)*5+(1:sz(1));
     c_albs_pos = (1:sz(1)) + sz(1);
-    wcnew = [reshape(wc{1}.*wr{1}',size(is_face,1),size(is_face,2)-1) zeros(size(is_face,1),1)];
+    wcnew = [reshape(wc{1}'.*wr{1}',size(is_face,1),size(is_face,2)-1) zeros(size(is_face,1),1)];
     val_posr = diffr.*wcnew(is_face)./alb1.^0.5*lamb_fs;
     val_posg = diffg.*wcnew(is_face)./alb1.^0.5*lamb_fs;
     val_posb = diffb.*wcnew(is_face)./alb1.^0.5*lamb_fs;
@@ -293,7 +283,7 @@ if nargout >1
     diffb = diffb(is_face);
     r_albs2 = sz(1)*6+(1:sz(1));
     c_albs_pos2 = (1:sz(1)) + sz(1);
-    wcnew = [reshape(wc{2}.*wr{2}',size(is_face,1)-1,size(is_face,2)); zeros(1,size(is_face,2))];
+    wcnew = [reshape(wc{2}'.*wr{2}',size(is_face,1)-1,size(is_face,2)); zeros(1,size(is_face,2))];
     val_posr2 = diffr.*wcnew(is_face)./alb3.^0.5*lamb_fs;
     val_posg2 = diffg.*wcnew(is_face)./alb3.^0.5*lamb_fs;
     val_posb2 = diffb.*wcnew(is_face)./alb3.^0.5*lamb_fs;
@@ -321,8 +311,8 @@ if nargout >1
     % d(L_n)/d(L)
     r_Ln_L = ones(numel(L_sh),1) + sz(1)*13+5;
     c_Ln_L = (1:numel(L_sh))+sz(1)*6;
-    v_Ln_L = 1/norm(L_sh)*L_sh*lamb_ln;
-    
+    v_Ln_L = 1/sqrt(sum([L_sh(1)^2*2; L_sh(2:end).^2]))*L_sh*lamb_ln;
+    v_Ln_L(1) = v_Ln_L(1)*2; % coz offset or zero freq component has double the energy
     % d(chrom_n)/d(L)
     r_chromn_chrom = ones(3,1) + sz(1)*13+6;
     c_chromn_chrom = (1:3)+sz(1)*6+numel(L_sh);
@@ -340,10 +330,10 @@ if nargout >1
     v_zp_dz = ones(size(c_zp_dz))*lamb_zp;
     
     % d(alb_n)/d(alb)
-    r_albn_alb = sz(1)*13+7 + ones(1,sz(1)*3);
-    c_albn_alb = sz(1) + (1:sz(1)*3);
-    v_albn_alb = 2*alb(is_face3)*lamb_fn*50/sz(1);
-    v_albn_alb = lamb_fn*10/sz(1)*ones(size(c_albn_alb));
+%     r_albn_alb = sz(1)*13+7 + ones(1,sz(1)*3);
+%     c_albn_alb = sz(1) + (1:sz(1)*3);
+%     v_albn_alb = 2*alb(is_face3)*lamb_fn*50/sz(1);
+%     v_albn_alb = lamb_fn*10/sz(1)*ones(size(c_albn_alb));
 
     r = [r_d_alb(:); r_d_L(:);...
         r_d_L(:)+sz(1); r_d_L(:)+sz(1)*2; r_d_chrom(:); r_d_P(:); r_s_n(:);...
@@ -351,21 +341,21 @@ if nargout >1
         r_albp_alb(:); r_albs(:); r_albs(:); r_albs2(:); r_albs2(:); ...
         r_albs(:); r_albs(:); r_albs2(:); r_albs2(:);  r_albs(:);...
         r_albs(:); r_albs2(:); r_albs2(:); r_np_n(:); r_ns_n(:); r_Ln_L(:);...
-        r_chromn_chrom(:); r_zs_dz(:); r_zp_dz(:); r_albn_alb(:)];
+        r_chromn_chrom(:); r_zs_dz(:); r_zp_dz(:);];
     c = [c_d_alb(:); c_d_L(:); c_d_L(:);...
         c_d_L(:); c_d_chrom(:); c_d_P(:); c_s_n(:); c_s_rho(:); c_s_L(:);...
         c_s_P(:); c_albp1_alb(:); c_albp2_alb(:); c_albp3_alb(:); c_albs_pos(:); c_albs_neg(:);...
         c_albs_pos2(:); c_albs_neg2(:); c_albs_pos(:)+sz(1); c_albs_neg(:)+sz(1);...
         c_albs_pos2(:)+sz(1); c_albs_neg2(:)+sz(1); c_albs_pos(:)+sz(1)*2; c_albs_neg(:)+sz(1)*2;...
         c_albs_pos2(:)+sz(1)*2; c_albs_neg2(:)+sz(1)*2; c_np_n(:); c_ns_n(:)...
-        ; c_Ln_L(:); c_chromn_chrom(:); c_zs_dz(:); c_zp_dz(:);c_albn_alb(:)];
+        ; c_Ln_L(:); c_chromn_chrom(:); c_zs_dz(:); c_zp_dz(:);];
     v = [v_d_alb(:); v_dr_L(:);...
         v_dg_L(:); v_db_L(:); v_d_chrom(:); v_d_P; v_s_n(:); v_s_rho(:);...
         v_s_L(:); v_s_P(:); v_albp_alb1(:); v_albp_alb2(:); v_albp_alb3(:);...
         val_posr(:); -val_posr(:); val_posr2(:); -val_posr2(:); val_posg(:);...
         -val_posg(:); val_posg2(:); -val_posg2(:); val_posb(:); -val_posb(:);...
         val_posb2(:); -val_posb2(:); v_np_n(:) ; v_ns_n(:); v_Ln_L(:);...
-        v_chromn_chrom(:); v_zs_dz(:); v_zp_dz(:); v_albn_alb(:) ];
+        v_chromn_chrom(:); v_zs_dz(:); v_zp_dz(:); ];
 %     tic
 %     J = sparse(r,c,v,numel(cost),numel(params),numel(r));
 %     toc
@@ -384,7 +374,10 @@ if nargout >1
         J(sz(1)*13+1 + (1:3),sz(1)*6 + numel(L_sh) + (1:3)) = ...
             J_num(1+(1:3),sz(1)*6 + numel(L_sh) + (1:3));
     end
-
+    if type
+%         J(:,(sz(1)+1):end) = 0;
+%         J(sz(1)*3 + (1:sz(1)),:) = 0;
+    end
 %     J(:,sz(1)*6+numel(L_sh)+(1:3))=0;
 end
 catch err

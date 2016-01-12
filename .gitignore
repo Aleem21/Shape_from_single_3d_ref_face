@@ -64,3 +64,11 @@ stasm4/
 
 # mex files
 #*.mexw64
+
+# Non code files
+*.exe
+*.gif
+*.mp4
+*.mat
+*.png
+*.tiff
