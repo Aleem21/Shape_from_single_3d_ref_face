@@ -12,6 +12,9 @@ if nargin<13
     is_gnd = 0;
 else
     is_gnd = 1;
+    if isempty(z_gnd)
+        is_gnd = 0;
+    end
 end
 %% Prepocessing
 

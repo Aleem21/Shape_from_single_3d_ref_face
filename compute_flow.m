@@ -31,7 +31,7 @@ if morph
     cd ..
 end
 
-if n_levels>0
+if n_levels>0 && n_iters>0
     if size(im1,3)==1
         im1_pyr{1} = im1;
         im2_pyr{1} = im2;
@@ -48,7 +48,7 @@ if n_levels>0
         for i=numel(im1_pyr):-1:1
             uv = imresize(uv,[size(im1_pyr{i},1) size(im1_pyr{i},2)]);
             [x, y] = meshgrid(1:size(im1_pyr{i},2), 1:size(im1_pyr{i},1));
-            for j=1:n_iters-((n_iters/numel(im1_pyr)*i))+1
+            for j=1:max(n_iters-(n_iters/(numel(im1_pyr)-1)*(i-1)),1)
                 im1_cur  = interp2(im1_pyr{i}, x-uv(:,:,1), y-uv(:,:,2));
                 im1_cur(isnan(im1_cur)) = im1_pyr{i}(isnan(im1_cur));
                 
@@ -63,7 +63,7 @@ if n_levels>0
 else
     uv = zeros(size(im1,1),size(im1,2),2);
 end
-gauss=fspecial('gaussian',5,5);
+% gauss=fspecial('gaussian',5,5);
 
 gauss = 1;
 

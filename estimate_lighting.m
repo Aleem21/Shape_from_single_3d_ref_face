@@ -55,7 +55,7 @@ Y = [   a0*c0*     ones(size(nx));
   a2*c2/(12)^.5*   (3*nz.^2-1) ];
 
 % pick 1st 4 coefficients and remove nan values
-
+im2 = im;
 Y = Y(1:nComp,~isnan(nx));
 %vectorize image as row vector and remove nan values
 im = im(:);
@@ -77,7 +77,7 @@ if ~is_ambient
     l(2:end+1) = l(1:end);
     l(1) = 0;
 else
-    if non_lin
+    if non_lin==1
         A = [-1;zeros(size(Y,1)-1,1)]';
         b = 0;
         fval = [];l = [];
@@ -89,6 +89,16 @@ else
         [~,ind] = min(fval);
         l = l(:,ind);
         l = l';
+    elseif non_lin==2
+        init =rand(size(Y,1),1);
+        options = optimset('Display','Iter-Detailed','Algorithm','trust-region-reflective');
+        l = lsqnonlin(@(x)cost_est_l_max(x,radiosity,Y),init,[],[],options);
+        l = l';
+%         cost = cost_est_l_max(l',radiosity,Y);
+%         im3 = zeros(size(n,1),size(n,2));
+%         c = zeros(size(n,1),size(n,2));
+%         c(~isnan(n(:,:,1))) = cost.^2;
+%         im3(~isnan(n(:,:,1))) = l*Y;
     else
         l = radiosity * pinv(Y);
     end

@@ -5,8 +5,16 @@ function [ cost, jacobian] = cost_nonlin_depth( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_r
 p = z(i_p(:,1))-z(i_p(:,2));
 q = z(i_q(:,1))-z(i_q(:,2));
 dark_factor = eye_mask;
-cost_data = (rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4))-im).*dark_factor;
+cost_data = (max(rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4)),0)-im).*dark_factor;
 
+synth = fill_var(max(rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4)),0),is_face,0);
+im2 = fill_var(im,is_face,0);
+z_synth = fill_var(z,is_face,nan);
+p_synth = fill_var(p,is_face,0);
+q_synth = fill_var(q,is_face,0);
+
+
+q_synth = zeros(size(is_face));
 %% boundary conditions
 if type==1
     cost_bound = (z(i_bx(:,1))-z(i_bx(:,2))).*ncx + (z(i_by(:,1))-z(i_by(:,2))).*ncy;
@@ -94,5 +102,13 @@ if nargout >1
         nR,nC);
     end
 end
+end
+function out = fill_var(x,is_face,to_fill)
+if nargin<3
+    to_fill = 0;
+end
+out = zeros(size(is_face));
+out(:) = to_fill;
+out(is_face) = x;
 end
 

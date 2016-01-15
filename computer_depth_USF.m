@@ -15,7 +15,20 @@ pts(3,:) = (pts(3,:)-minz)/(maxz-minz)*2-1;
 
 rRes = yrange(2);
 cRes = xrange(2);
-[rendered,z] = render_rgb_USF( pts,tri,rgb,rRes,cRes);
+if rRes<200
+    rRes_new = 200;
+else
+    rRes_new = rRes;
+end
+if cRes<200
+    cRes_new = 200;
+else
+    cRes_new = cRes;
+end
+    
+[rendered,z] = render_rgb_USF( pts,tri,rgb,rRes_new,cRes_new);
+rendered = imresize(rendered,[rRes cRes]);
+z = imresize(z,[rRes cRes]);
 z = (double(z)+1)/2*(maxz-minz)+minz;
 
 if talk

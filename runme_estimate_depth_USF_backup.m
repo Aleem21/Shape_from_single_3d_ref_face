@@ -76,8 +76,8 @@ if raw
     [im_c,im] = imread_raw([raw_path raw_imgs{i}]);
     mask = double(imread([raw_path raw_imgs{i}(1:end-4) '_mask.tiff'])>0);
     mask = mask(:,:,1);
-    im_c = imresize(im_c,0.03);
-    im = imresize(im,0.03);
+    im_c = imresize(im_c,0.07);
+    im = imresize(im,0.07);
     im_c = im_c .*repmat(imresize(mask,[size(im_c,1) size(im_c,2)]),1,1,3);
     im = im.*imresize(mask,[size(im_c,1) size(im_c,2)]);
     im(im<0) = 0;
@@ -146,25 +146,14 @@ if ~is_albedo
     alb_ref = alb_ref*0+1;
 end
 alb_ref(alb_ref>0.1) = 1;
-%% synthetic magic
-l_synth = [0.1;0.05;0.08;-0.06];
-n_synth = normal_from_depth(dmap_ref);
-alb_ref(:) = 1;
-im = render_model_noGL(n_synth,l_synth,alb_ref,0);
-
-
 %% estimate lighting
 % dmap_ref = dmap_ref*2;
 % [n_ref,N_ref] = normal_from_depth(dmap_ref);
 is_ambient = 1;
 non_lin = 2;
-l_est_amb_lin = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin);
+l_est_amb_lin = estimate_lighting(n_ref, alb_ref*0+1, im,4,talk,is_ambient,non_lin);
 x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
 A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
-
-
-
-
 
 Rpose = eye(4);
 xrange = [-150 150];
@@ -190,9 +179,9 @@ im_rendered = render_model_noGL(n_ref,l_est_amb_lin,alb_ref,0);
 alb_ref2 = alb_ref;
 if flow
     % number of pyramid levels
-    n_levels = 1;
+    n_levels = 2;
     % number of iterations of flow on each level
-    n_iters = 0;
+    n_iters = 1;
     % do morphing before optical flow?
     morph = 0;
     dmap_ref_old = dmap_ref;
@@ -211,7 +200,7 @@ n_ref = normal_from_depth(dmap_ref);
 
 is_ambient = 1;
 non_lin = 2;
-l_est_amb_lin = estimate_lighting(n_ref, alb_ref2, im,4,talk,is_ambient,non_lin);
+l_est_amb_lin = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin);
 x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
 A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
 
@@ -230,8 +219,8 @@ elseif is_alb_opt
 %     if raw
 %         im_inp = im.^(1/2.2);
 %     end
-    [depth,alb,is_face] = estimate_depth_nonlin(alb_ref2*255,im_inp*255,dmap_ref+rand(size(dmap_ref))*5,l_est_amb_lin,...
-        lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_dz_depth,lambda_dz,[],algo,1);
+    [depth,alb,is_face] = estimate_depth_nonlin(alb_ref2*255,im_inp*255,dmap_ref,l_est_amb_lin,...
+        lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_dz_depth,lambda_dz,[],algo,0);
     figure;imshow(alb/255);
     alb_render = alb/255;
     title('estimated albedo')
