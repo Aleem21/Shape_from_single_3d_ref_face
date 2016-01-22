@@ -46,7 +46,8 @@ pts_rotated = pts_rotated([1 2 3],:);
 %% generate depth map by calling mex file
 [depth_map,albedo] = computer_depth_USF( pts_rotated,tri,rgb,xrange,yrange,im_c,talk );
 scalez = 1/9*1/min(Scale);
-albedo = im2double(rgb2gray(albedo));
+albedo = rgb2xyz(albedo);
+albedo = double(albedo(:,:,2));
 
 %% generate eyemap
 [~,eye_map] = computer_depth_USF( pts_rotated,tri,eye_rgb,xrange,yrange,im_c,talk );

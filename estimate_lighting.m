@@ -1,4 +1,4 @@
-function [ l ] = estimate_lighting( n, alb, im,nComp,talk,is_ambient,non_lin )
+function [ l ] = estimate_lighting( n, alb, im,nComp,talk,is_ambient,non_lin,eye_mask )
 %ESTIMATE_LIGHTING etimate lighting spherical harmonic coefficients given
 %the normal map and input image
 %
@@ -19,6 +19,9 @@ if nargin<6
 end
 if nargin<7
     non_lin = 1;
+end
+if nargin<8
+    eye_mask = ones(size(im));
 end
 if talk
     rad = im./alb;
@@ -56,14 +59,15 @@ Y = [   a0*c0*     ones(size(nx));
 
 % pick 1st 4 coefficients and remove nan values
 im2 = im;
-Y = Y(1:nComp,~isnan(nx));
+eye_mask_v = (eye_mask(:)'==1);
+Y = Y(1:nComp,~isnan(nx) & eye_mask_v & ~isnan(alb(:)'));
 %vectorize image as row vector and remove nan values
 im = im(:);
-im = im(~isnan(nx))';
 alb = alb(:);
-alb = alb(~isnan(nx))';
+im = im(~isnan(nx) & eye_mask_v & ~isnan(alb'))';
+alb = alb(~isnan(nx) & eye_mask_v & ~isnan(alb'))';
 
-bad = im<0.01 | im>0.9 | alb< 0.05;
+bad = im<0.01 | im>0.9 | alb< 0.01;
 % bad = [];
 im(bad) = [];
 alb(bad) = [];

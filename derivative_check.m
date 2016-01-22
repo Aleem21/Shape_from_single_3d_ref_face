@@ -1,4 +1,4 @@
-function [ derivative,max_err,rc,errs] = derivative_check( val,fun,nOnes,type,jackPattern )
+function [ derivative,max_err,rc,errs] = derivative_check( val,fun,nOnes,type,delta )
 %DERIVATIVE_CHECK Summary of this function goes here
 %   Detailed explanation goes here
 c = numel(val);
@@ -8,7 +8,9 @@ thresh = 0;
 if nargin<3
     nOnes = r*c;
 end
-delta = 1e-5;
+if nargin < 5
+    delta = 1e-10;
+end
 counter = 1;
 rz = zeros(1,nOnes);
 cz = zeros(1,nOnes);
@@ -36,19 +38,23 @@ derivative = sparse(rz,cz,vz);
 if type==2
     [~,d2] = fun(val);
 end
-max_err = 0;
-for i=1:numel(rz)
-        if abs(derivative(rz(i),cz(i))-d2(rz(i),cz(i)))>max_err
-            max_err = abs(derivative(rz(i),cz(i))-d2(rz(i),cz(i)));
-            maxi = rz(i);
-            maxj = cz(i);
-        end   
-end
-rc = [maxi; maxj];
-errs = [];
-if nargin>4
-    errs = (jackPattern - (derivative>0))<0;
-    errs = sum(errs(:));
-end
+% max_err = 0;
+% for i=1:numel(rz)
+%         if abs(derivative(rz(i),cz(i))-d2(rz(i),cz(i)))>max_err
+%             max_err = abs(derivative(rz(i),cz(i))-d2(rz(i),cz(i)));
+%             maxi = rz(i);
+%             maxj = cz(i);
+%         end
+% end
+% rc = [maxi; maxj];
+errs = abs(derivative(sub2ind(size(derivative),rz,cz))...
+    -d2(sub2ind(size(derivative),rz,cz)));
+[max_err,ind] = max(errs);
+rc = [rz(ind);cz(ind)];
+% errs = [];
+% if nargin>4
+%     errs = (jackPattern - (derivative>0))<0;
+%     errs = sum(errs(:));
+% end
 end
 

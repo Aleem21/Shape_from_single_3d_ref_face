@@ -1,4 +1,4 @@
-function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_depth_costfun( z_ref, im,alb_ref, sh_coeff, eye_mask,lambda1,lambda_bound,type,is_dz_depth,lambda_dz)
+function [ costfun, face,nData,nBound,nReg,jacobianPattern ] = get_depth_costfun( z_ref, im,alb_ref, sh_coeff, eye_mask,lambda1,lambda_bound,type,is_dz_depth,lambda_dz,lambda_reg2)
 %GET_COSTFUN Summary of this function goes here
 %   Detailed explanation goes here
 %% Pre processing
@@ -36,10 +36,10 @@ sub2ind_face(face) = 1:sum(face(:));
 
 %% cost function
 % Data term
-xp = sub2ind_face(sub2ind(size(im),r_face,c_face-1));
+xp = sub2ind_face(sub2ind(size(im),r_face,max(c_face-1,1)));
 xn = sub2ind_face(sub2ind(size(im),r_face,c_face));
 
-yp = sub2ind_face(sub2ind(size(im),r_face-1,c_face));
+yp = sub2ind_face(sub2ind(size(im),max(r_face-1,1),c_face));
 yn = sub2ind_face(sub2ind(size(im),r_face,c_face));
 
 ind = find(xp==0);
@@ -137,9 +137,9 @@ end
 
 if nargout >2
     % Jacobian Pattern
-    nR = sum(face(:))+sum(in_inface(:)) + sum(b_out_full(:));
+    nR = sum(face(:))+sum(in_inface(:)) + sum(b_out_full(:)) + sum(in_inface(:));
     nC = sum(face(:));
-    nOnes = sum(in_face(:))*(3+9) + sum(b_out_full(:))*4;
+    nOnes = sum(in_face(:))*(3+9+9) + sum(b_out_full(:))*4;
     jacobianPattern = sparse([],[],[],nR,nC,nOnes);
     constNumber = repmat(1:numel(xp),4,1)';
     jacobianPattern(sub2ind([nR nC],constNumber,[xp yp xn yn])) = 1;
@@ -159,18 +159,24 @@ if nargout >2
     constNumber = repmat(1:size(iz_reg,1),9,1)' + offset;
     jacobianPattern(sub2ind([nR nC],constNumber,...
         iz_reg)) = 1;
+    
+    
+    offset = offset + size(iz_reg,1);
+    constNumber = repmat(1:size(iz_reg,1),9,1)' + offset;
+    jacobianPattern(sub2ind([nR nC],constNumber,...
+        iz_reg)) = 1;
 end
 % get eye map
 if type==1
     costfun=@(z)cost_nonlin_depth(z,[xp xn],[yp yn],...
         [xp_bound xn_bound],[yp_bound yn_bound],...
         ncx,ncy,iz_reg,...
-        im(face),rhs_reg,lambda_dz,sh_coeff,rho_ref,z_ref(in_face),gaussVec,type,is_dz_depth,eye_mask(face));
+        im(face),rhs_reg,lambda_dz,lambda_reg2,sh_coeff,rho_ref,z_ref(in_face),gaussVec,type,is_dz_depth,eye_mask(face));
 else
     costfun=@(z)cost_nonlin_depth(z,[xp xn],[yp yn],...
     [],[],...
     ncx,ncy,iz_reg,...
-    im(face),rhs_reg,lambda_dz,sh_coeff,rho_ref,z_ref(in_face),gaussVec,type,is_dz_depth,eye_mask(face),i_bound,val_bound,face);
+    im(face),rhs_reg,lambda_dz,lambda_reg2,sh_coeff,rho_ref,z_ref(in_face),gaussVec,type,is_dz_depth,eye_mask(face),i_bound,val_bound,face);
 
 end
 nData = numel(xp);

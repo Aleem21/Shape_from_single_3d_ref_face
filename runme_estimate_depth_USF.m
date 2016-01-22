@@ -6,7 +6,7 @@ addpath ('.\SHT')
 %% set initial variables
 % optimization weights
 lambda1 = 5;
-lambda2 = 30;
+lambda2 = 5;
 
 % number of maximum iterations of depth optimization
 max_iter = 500;
@@ -20,7 +20,7 @@ is_albedo = 1;
 lambda_bound = 1;
 is_dz_depth = 0;
 lambda_dz = 0;
-
+lambda_reg2 = 5;
 % Do you want to optimize for albedo as well?
 is_alb_opt = 1;
 
@@ -51,7 +51,7 @@ internet = 1;
 internet_path = '.\data\internet\';
 internet_imgs = {'paper small.png'};
 
-raw = 1;
+raw = 0;
 raw_path = '.\data\RAW\';
 raw_imgs = {'mahmood2.cr2'};
 
@@ -59,7 +59,7 @@ raw_imgs = {'mahmood2.cr2'};
 folder_path = '.\data\USF_images\';
 
 % change this for different USF images
-impaths = {'03721c15.eko'};
+impaths = {'03643c18.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
@@ -68,23 +68,31 @@ count = 1;
 % talk = 0 - least talking and result displaying.
 % talk is not fully consistent in all the code. Needs improvement.
 talk = 4;
-
+RGB_to_XYZ = [  0.4124564 0.3575761 0.1804375;
+    0.2126729 0.7151522 0.0721750;
+    0.0193339 0.1191920 0.9503041];
+XYZ_to_RGB = inv(RGB_to_XYZ);
 i=1;
 impath = [folder_path impaths{i}];
 %% make image
 if raw
     [im_c,im] = imread_raw([raw_path raw_imgs{i}]);
+    im_c = im_c/nanmax(im_c(:));
+    im = im/nanmax(im(:));
     mask = double(imread([raw_path raw_imgs{i}(1:end-4) '_mask.tiff'])>0);
     mask = mask(:,:,1);
-    im_c = imresize(im_c,0.03);
-    im = imresize(im,0.03);
+    im_c = imresize(im_c,0.07);
+    im = imresize(im,0.07);
     im_c = im_c .*repmat(imresize(mask,[size(im_c,1) size(im_c,2)]),1,1,3);
     im = im.*imresize(mask,[size(im_c,1) size(im_c,2)]);
     im(im<0) = 0;
     im_c(im_c<0) = 0;
+    im_c(repmat(im<1e-4,1,1,3)) = nan;
+    im(im<1e-4)=nan;
 elseif ~internet
     % choose some spherical harmonic coefficients for image synthesis
-    sh_coeff = [0.0 0.6 0.5 -1.3]/1.2;
+    %     sh_coeff = [0.3 0.6 0.5 -1.3]/1.2;
+    sh_coeff = [1 0 0 0];
     x = sh_coeff(2);   y = sh_coeff(3);   z = -sh_coeff(4);
     A_gt = atan2d(x,z);    E_gt = atan2d(y,z);
     
@@ -100,12 +108,24 @@ elseif ~internet
         %set albedo to 1
         im_c = im_c*0+1;
     end
-    im_c = render_model_noGL(n_gt,sh_coeff,im_c,0);
-    im = rgb2gray(im_c);
+    lin_xyz = rgb2xyz(im_c);
+    lin_rgb = correct(lin_xyz,XYZ_to_RGB);
+    im_c = render_model_noGL(n_gt,sh_coeff,lin_rgb,0);
+    im_c(im_c==1)=nan;
+    lin_xyz = correct(im_c,RGB_to_XYZ);
+    lin_xyz(lin_xyz==1)=nan;
+    lin_xyz = lin_xyz;
+%     lin_xyz = lin_xyz/nanmax(lin_xyz(:));
+    im = lin_xyz(:,:,2);
     %     im_c = imresize(im2double(imread('.\data\testface.jpg')),1);
 else
     im_c = im2double(imread([internet_path internet_imgs{i}]));
-    im = rgb2gray(im_c);
+    lin_xyz = rgb2xyz(im_c);
+    im_c(repmat(lin_xyz(:,:,2)==0,1,1,3)) = nan;
+    lin_xyz = rgb2xyz(im_c);
+    %     im_c = im_c.^(2.4);
+    %     im = rgb2gray(im_c);
+    im = lin_xyz(:,:,2);
 end
 
 if ~is_albedo
@@ -114,10 +134,10 @@ end
 %% Run face tracker
 landmarks = stasm_tracker(im_c,talk);
 % landmarks = stasm_tracker(im,talk);
-labels = mark_regions(landmarks,im_c);
 if isempty(landmarks)
     warning('no landmarks detected by face tracker')
 end
+labels = mark_regions(landmarks,im_c);
 
 %% no texture version
 % % im_c = render_model_noGL(n_gt,sh_coeff,im_c,0);
@@ -137,6 +157,8 @@ ply_path = '.\data\ref_model.ply';
 dataset_path = '..\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test';
 
 [dmap_ref, n_ref, N_ref, alb_ref,eye_mask,scalez] = generate_ref_depthmap_USF(Scale,Rpose,im,im_c,dataset_path,talk);
+alb_ref(alb_ref==0)=nan;
+N_ref(isnan(alb_ref))=nan;
 N_ref(isnan(im))=nan;
 %     N_gnd(isnan(N_ref))=NaN;
 n_ref((isnan(repmat(im,1,1,3)))) = nan;
@@ -145,23 +167,29 @@ dmap_ref(isnan(im))=nan;
 if ~is_albedo
     alb_ref = alb_ref*0+1;
 end
-alb_ref(alb_ref>0.1) = 1;
+% alb_ref =alb_ref*0+1;
+% alb_ref(alb_ref>0.1) = 1;
 %% synthetic magic
-l_synth = [0.1;0.05;0.08;-0.06];
-n_synth = normal_from_depth(dmap_ref);
-alb_ref(:) = 1;
-im = render_model_noGL(n_synth,l_synth,alb_ref,0);
-
+% l_synth = [0.0;0.05;-0.08;-0.1]*5;
+% % dmap_ref = imresize(dmap_ref,0.5,'nearest');
+% n_ref = normal_from_depth(dmap_ref);
+% % alb_ref = imresize(alb_ref,0.5,'nearest');
+% n_synth = normal_from_depth(dmap_ref);
+%
+% alb_ref(:) = 1;
+% im = render_model_noGL(n_synth,l_synth,alb_ref,0);
+%
+% % labels = imresize(labels,0.5,'nearest');
+% % im_c = imresize(im_c ,0.5,'nearest');
 
 %% estimate lighting
 % dmap_ref = dmap_ref*2;
 % [n_ref,N_ref] = normal_from_depth(dmap_ref);
 is_ambient = 1;
-non_lin = 2;
-l_est_amb_lin = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin);
+non_lin = 0;
+l_est_amb_lin = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin,eye_mask);
 x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
 A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
-
 
 
 
@@ -190,9 +218,9 @@ im_rendered = render_model_noGL(n_ref,l_est_amb_lin,alb_ref,0);
 alb_ref2 = alb_ref;
 if flow
     % number of pyramid levels
-    n_levels = 1;
+    n_levels = 2;
     % number of iterations of flow on each level
-    n_iters = 0;
+    n_iters = 1;
     % do morphing before optical flow?
     morph = 0;
     dmap_ref_old = dmap_ref;
@@ -206,11 +234,15 @@ dmap_ref(isnan(alb_ref2)) = nan;
 % end
 dmap_ref(isnan(im))=nan;
 dmap_ref(dmap_ref==0) = nan;
-
+n_ref_old = n_ref;
 n_ref = normal_from_depth(dmap_ref);
+n_ref((isnan(repmat(im,1,1,3)))) = nan;
+dmap_ref(isnan(im))=nan;
+
+
 
 is_ambient = 1;
-non_lin = 2;
+non_lin = 0;
 l_est_amb_lin = estimate_lighting(n_ref, alb_ref2, im,4,talk,is_ambient,non_lin);
 x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
 A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
@@ -227,12 +259,53 @@ if combined
     title('estimated albedo')
 elseif is_alb_opt
     im_inp = im;
-%     if raw
-%         im_inp = im.^(1/2.2);
-%     end
-    [depth,alb,is_face] = estimate_depth_nonlin(alb_ref2*255,im_inp*255,dmap_ref+rand(size(dmap_ref))*5,l_est_amb_lin,...
-        lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_dz_depth,lambda_dz,[],algo,1);
-    figure;imshow(alb/255);
+    %     if raw
+    %         im_inp = im.^(1/2.2);
+    %     end
+    RGB_to_XYZ = [  0.4124564 0.3575761 0.1804375;
+        0.2126729 0.7151522 0.0721750;
+        0.0193339 0.1191920 0.9503041];
+    if raw
+%         [D,S,chrom_p] = seperate_specular(im_c,eye_mask>0,labels);
+%         lin_XYZ = correct(D,RGB_to_XYZ);
+%         D = lin_XYZ(:,:,2);
+        lin_xyz = correct(im_c,RGB_to_XYZ);
+        [D,S,chrom_p] = seperate_specular(xyz2rgb(lin_xyz),eye_mask>0,labels);
+        D = rgb2xyz(D);
+        D = D(:,:,2);
+    else
+%         %         im_c = correct(lin_xyz,XYZ_to_RGB);
+%         [D,S,chrom_p] = seperate_specular(im_c,eye_mask>0,labels);
+%         %         [D,S,chrom_p] = seperate_specular(xyz2rgb(lin_xyz),eye_mask>0,labels);
+%         lin_XYZ = correct(D,RGB_to_XYZ);
+%         D = lin_XYZ(:,:,2);
+%         %         D = rgb2xyz(D);
+%         %         D = D(:,:,2);
+        
+%         [D,S,chrom_p] = seperate_specular(xyz2rgb(lin_xyz),eye_mask>0,labels);
+        [D,S,chrom_p] = seperate_specular(correct(lin_xyz,XYZ_to_RGB),eye_mask>0,labels);
+        D = correct(D,RGB_to_XYZ);
+%         D = xyz2rgb(D);
+%         D = rgb2xyz(D);
+        D = D(:,:,2);
+    end
+    lambda_reg2 = 0.3;
+    is_dz_depth = 1;
+    lambda_dz = 1;
+    lambda1 = 80;
+    % eye_mask(:) = 1;
+    lambda_bound = 0.5;
+    max_iter = 100;
+    % l_est_amb_lin = l_synth;
+    rng(1);
+    [depth,alb,is_face] = estimate_depth_nonlin(alb_ref2*255,D*255,...
+        dmap_ref,l_est_amb_lin,...
+        lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,...
+        is_dz_depth,lambda_dz,lambda_reg2,[],algo,1);
+    offset = mean(depth(is_face)) - mean(dmap_ref(is_face));
+    depth = depth-offset;
+    figure;surf(depth);axis equal
+    figure;imshow(alb,[]);
     alb_render = alb/255;
     title('estimated albedo')
 else
@@ -244,13 +317,10 @@ end
 is_face = remove_bad_boundary(is_face)>0;
 
 %% Display results
-alb_render = max(alb_render,0);
 figure;
 im_c(im_c<0) = 0;
 im_inp_c = im_c;
-if raw
-    im_inp_c = im_c.^(1/2.2);
-end
+    im_inp_c = xyz2rgb(lin_xyz);
 depth_s=surf(depth,im_inp_c,'edgealpha',0,'facecolor','interp');axis equal
 colormap 'gray';
 phong.shading(depth_s);
@@ -265,7 +335,7 @@ end
 [n_new,N_ref_new] =normal_from_depth( depth );
 p_new = n_new(:,:,1).*N_ref_new;
 q_new = n_new(:,:,2).*N_ref_new;
-% 
+%
 % save('state_aunty.mat');
 % sc = 0.6;
 % im_c = imresize(im_c,sc);

@@ -15,10 +15,10 @@ sub2ind_face = find_elements([r_face c_face],fr',fc');
 
 %% cost function
 % Data term
-xp = sub2ind_face(sub2ind(size(im),r_face,c_face-1));
+xp = sub2ind_face(sub2ind(size(im),r_face,max(c_face-1,1)));
 xn = sub2ind_face(sub2ind(size(im),r_face,c_face));
 
-yp = sub2ind_face(sub2ind(size(im),r_face-1,c_face));
+yp = sub2ind_face(sub2ind(size(im),max(r_face-1,1),c_face));
 yn = sub2ind_face(sub2ind(size(im),r_face,c_face));
 
 ind = find(xp==0);

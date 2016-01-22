@@ -3,11 +3,11 @@ function [ D,S,chrom_light ] = seperate_specular( im,mask,labels )
 %   Detailed explanation goes here
 mask(isnan(im(:,:,1))) = 0;
 mask3 = repmat(mask,1,1,3);
-clrs = im(mask3);
-sz = numel(clrs)/3;
-clrs2 = reshape(clrs,sz,3);
-[~,~,V] = svd(clrs2, 0);
-pln = [V(:,end)];
+% clrs = im(mask3);
+% sz = numel(clrs)/3;
+% clrs2 = reshape(clrs,sz,3);
+% [~,~,V] = svd(clrs2, 0);
+% pln = [V(:,end)];
 % figure;plot(clrs2*pln);
 
 im_g = rgb2gray(im);
@@ -28,6 +28,10 @@ for n_i = 1:10
     mask_n_i = repmat((labels==n_i),1,1,3);
 %     mask_n_i = repmat(mask,1,1,3);
     clrs_r = reshape(im(mask_n_i),[],3);
+    clrs_r(isnan(clrs_r)) = [];
+    if size(clrs_r,1)==1
+        clrs_r = reshape(clrs_r,[],3);
+    end
     if numel(clrs_r)==0
         continue
     end
@@ -44,13 +48,22 @@ for n_i = 1:10
     
     
     dif_colors_r = reshape(im(D_30_50_i.*repmat(labels==n_i,1,1,3)>0),[],3);
+    if numel(dif_colors_r)==0
+        dif_colors_r = reshape(im(repmat(labels==n_i,1,1,3)>0),[],3);
+    end
     dif_mag_r = sum(dif_colors_r.^2,2).^0.5;
-    dif_colors_r(repmat(dif_mag_r==0,1,3))=[];
-    dif_mag_r(repmat(dif_mag_r==0,1,3))=[];
+    dif_colors_r(repmat(dif_mag_r==0,1,3)>0)=[];
+    if size(dif_colors_r,1)==1
+        dif_colors_r =  reshape(dif_colors_r,[],3);
+    end
+    dif_mag_r(dif_mag_r==0)=[];
     dif_chrom_r = dif_colors_r./repmat(dif_mag_r,1,3);
+    nans = find(isnan(dif_chrom_r(:,1)));
+    dif_chrom_r(nans,:) = [];
     mean_dif_chrom = [mean_dif_chrom;dif_chrom_r];
     mean_dif_chrom_r(:,n_i) = mean(dif_chrom_r,1)';
 end
+
 mean_dif_chrom = mean(mean_dif_chrom)';
 costfn = @(chr)costfn_plankian(chr,N);
 chrom_init = rand(3,1);

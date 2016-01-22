@@ -89,8 +89,4 @@ switch align
         colormask(1:2:end,2:2:end) = wbmults(3); %b
 end
 end
-function corrected = correct(I,correction)
-sz = size(I);
-corrected = reshape((correction*(reshape(I,[],3)'))',sz);
-corrected = max(0,min(corrected,1));
-end
+
