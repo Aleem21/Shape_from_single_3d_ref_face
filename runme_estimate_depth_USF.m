@@ -59,7 +59,7 @@ raw_imgs = {'mahmood2.cr2'};
 folder_path = '.\data\USF_images\';
 
 % change this for different USF images
-impaths = {'03643c18.eko'};
+impaths = {'03519c27.eko'};
 n = numel(impaths);
 f=figure;hold on
 count = 1;
@@ -187,7 +187,7 @@ end
 % [n_ref,N_ref] = normal_from_depth(dmap_ref);
 is_ambient = 1;
 non_lin = 2;
-l_est_amb_lin = estimate_lighting(n_ref, alb_ref*0+1, im,4,talk,is_ambient,non_lin,eye_mask);
+l_est_amb_lin = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin,eye_mask);
 x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
 A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
 
@@ -214,11 +214,11 @@ title(sprintf('Ambient, lin\n A: %.0f, E: %.0f',A_est_amb_lin,E_est_amb_lin));
 % input image
 % l_est_amb_lin = l_est_amb_lin;
 
-im_rendered = render_model_noGL(n_ref,l_est_amb_lin,alb_ref*0+1,0);
+im_rendered = render_model_noGL(n_ref,l_est_amb_lin,alb_ref,0);
 alb_ref2 = alb_ref;
 if flow
     % number of pyramid levels
-    n_levels = 2;
+    n_levels = 3;
     % number of iterations of flow on each level
     n_iters = 1;
     % do morphing before optical flow?
@@ -228,7 +228,7 @@ if flow
         alb_ref,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
 end
 dmap_ref2(isnan(alb_ref2)) = nan;
-eye_mask(isnan(eye_mask))= 0;
+eye_mask(isnan(eye_mask))= 1;
 % if ~is_albedo
 %     l_est_amb_lin = sh_coeff;
 % end
@@ -240,12 +240,6 @@ n_ref((isnan(repmat(im,1,1,3)))) = nan;
 dmap_ref2(isnan(im))=nan;
 
 
-
-is_ambient = 1;
-non_lin = 2;
-l_est_amb_lin = estimate_lighting(n_ref, alb_ref2*0+1, im,4,talk,is_ambient,non_lin);
-x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
-A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
 
 
 %% Optimization
@@ -289,13 +283,20 @@ elseif is_alb_opt
 %         D = rgb2xyz(D);
         D = D(:,:,2);
     end
+    
+    is_ambient = 1;
+    non_lin = 2;
+    l_est_amb_lin = estimate_lighting(n_ref, alb_ref2, D,4,talk,is_ambient,non_lin);
+    x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
+    A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
+
     lambda_reg2 = 0.3;
-    is_dz_depth = 0.2;
-    lambda_dz = 1;
+    is_dz_depth = 1;
+    lambda_dz = 0.2;
     lambda1 = 80;
     % eye_mask(:) = 1;
     lambda_bound = 0.5;
-    max_iter = 100;
+    max_iter = 10;
     % l_est_amb_lin = l_synth;
     rng(1);
     [depth,alb,is_face] = estimate_depth_nonlin(alb_ref2*255,D*255,...
@@ -303,6 +304,7 @@ elseif is_alb_opt
         lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,...
         is_dz_depth,lambda_dz,lambda_reg2,[],algo,1);
     offset = mean(depth(is_face)) - mean(dmap_ref2(is_face));
+    offset = mean(depth(is_face)) - mean(z_gt(is_face));
     depth = depth-offset;
     figure;surf(depth);axis equal
     figure;imshow(alb,[]);
@@ -321,13 +323,13 @@ figure;
 im_c(im_c<0) = 0;
 im_inp_c = im_c;
     im_inp_c = xyz2rgb(lin_xyz);
-depth_s=surf(dmap_ref2,im_inp_c,'edgealpha',0,'facecolor','interp');axis equal
+depth_s=surf(depth,im_inp_c,'edgealpha',0,'facecolor','interp');axis equal
 colormap 'gray';
 phong.shading(depth_s);
 title('Estimated Depth')
 if exist('z_gt')
     figure;
-    depth_s=surf(z_gt,im_c,'edgealpha',0,'facecolor','interp');axis equal
+    depth_s=surf(z_gt,im_c.^(1/2.2),'edgealpha',0,'facecolor','interp');axis equal
     colormap 'gray';
     phong.shading(depth_s);
     title('Ground truth')

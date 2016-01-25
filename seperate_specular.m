@@ -89,6 +89,7 @@ for r = 1:10
     D(labels==r) = S_D(2,:);
 end
 S = S * rgb2gray(reshape(chrom_light,1,1,3));
+S(S<0) = 0;
 D = im - repmat(S,1,1,3);
 % gauss = fspecial('gaussian',3,1);
 % D = convn(D,gauss,'same');
