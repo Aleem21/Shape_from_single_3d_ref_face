@@ -48,7 +48,7 @@ pts_rotated = pts_rotated([1 2 3],:);
 scalez = 1/9*1/min(Scale);
 albedo = rgb2xyz(albedo);
 albedo = double(albedo(:,:,2));
-
+albedo = albedo/max(albedo(:));
 %% generate eyemap
 [~,eye_map] = computer_depth_USF( pts_rotated,tri,eye_rgb,xrange,yrange,im_c,talk );
 eye_map = double(eye_map(:,:,1)~=1);

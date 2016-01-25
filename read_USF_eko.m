@@ -47,8 +47,12 @@ else
                 +spherical(valid))./(count(valid)+1);
             im = double(find_USF_im(echo_path_i));
 %             im_mean = im_mean + (im-im_mean)/max(count(:));
-            im_mean = (im_mean*counter+im)/(counter+1);
-            subplot(1,2,1);imshow(im);subplot(1,2,2);imshow(im_mean)
+%             im_mean = (im_mean*counter+im)/(counter+1);
+            valid3 = repmat(valid,1,1,3);
+            count3 = repmat(count,1,1,3);
+            im_mean(valid3) = (im_mean(valid3).*...
+                count3(valid3)+im(valid3))./(count3(valid3)+1);
+            subplot(1,2,1);imshow(im/255);subplot(1,2,2);imshow(im_mean/255)
             count(valid) = count(valid) + 1;
             counter = counter+1;
             %         figure(f);
@@ -59,7 +63,8 @@ else
             fprintf('Models used: %d\n', counter)
         end
         im_mean = uint8(im_mean);
-%         spherical_mean(count < (max(count(:)))/5 ) = NaN;
+        spherical_mean(count < (max(count(:)))/5 ) = NaN;
+        im_mean(count3 < (max(count3(:)))/5 ) = 0;
         imwrite(im_mean,[echo_path_in 'ref_albedo.bmp']);
         save([echo_path_in 'ref_depth'],'spherical_mean');
     end

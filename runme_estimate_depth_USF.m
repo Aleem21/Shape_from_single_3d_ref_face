@@ -47,7 +47,7 @@ boundary_type = 2;
 flow = 1;
 
 % Use some real image as input rather than synthesizing one from dataset?
-internet = 1;
+internet = 0;
 internet_path = '.\data\internet\';
 internet_imgs = {'paper small.png'};
 
@@ -146,7 +146,7 @@ labels = mark_regions(landmarks,im_c);
 
 %% Compute pose
 % Is the face fronto parallel?
-restrictive = 0;
+restrictive = 1;
 cRes = size(im,2)*0+512;
 rRes = size(im,1)*0+512;
 [Rpose, Scale] = compute_pose_USF(landmarks, talk, im,restrictive,cRes,rRes);
@@ -186,8 +186,8 @@ end
 % dmap_ref = dmap_ref*2;
 % [n_ref,N_ref] = normal_from_depth(dmap_ref);
 is_ambient = 1;
-non_lin = 0;
-l_est_amb_lin = estimate_lighting(n_ref, alb_ref, im,4,talk,is_ambient,non_lin,eye_mask);
+non_lin = 2;
+l_est_amb_lin = estimate_lighting(n_ref, alb_ref*0+1, im,4,talk,is_ambient,non_lin,eye_mask);
 x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
 A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
 
@@ -214,7 +214,7 @@ title(sprintf('Ambient, lin\n A: %.0f, E: %.0f',A_est_amb_lin,E_est_amb_lin));
 % input image
 % l_est_amb_lin = l_est_amb_lin;
 
-im_rendered = render_model_noGL(n_ref,l_est_amb_lin,alb_ref,0);
+im_rendered = render_model_noGL(n_ref,l_est_amb_lin,alb_ref*0+1,0);
 alb_ref2 = alb_ref;
 if flow
     % number of pyramid levels
@@ -224,26 +224,26 @@ if flow
     % do morphing before optical flow?
     morph = 0;
     dmap_ref_old = dmap_ref;
-    [alb_ref2,dmap_ref,eye_mask]=compute_flow(im,im_rendered,landmarks,...
+    [alb_ref2,dmap_ref2,eye_mask]=compute_flow(im.^(1/2.2),im_rendered.^(1/2.2),landmarks,...
         alb_ref,dmap_ref,eye_mask,n_levels,n_iters,morph,1);
 end
-dmap_ref(isnan(alb_ref2)) = nan;
-
+dmap_ref2(isnan(alb_ref2)) = nan;
+eye_mask(isnan(eye_mask))= 0;
 % if ~is_albedo
 %     l_est_amb_lin = sh_coeff;
 % end
-dmap_ref(isnan(im))=nan;
-dmap_ref(dmap_ref==0) = nan;
+dmap_ref2(isnan(im))=nan;
+dmap_ref2(dmap_ref2==0) = nan;
 n_ref_old = n_ref;
-n_ref = normal_from_depth(dmap_ref);
+n_ref = normal_from_depth(dmap_ref2);
 n_ref((isnan(repmat(im,1,1,3)))) = nan;
-dmap_ref(isnan(im))=nan;
+dmap_ref2(isnan(im))=nan;
 
 
 
 is_ambient = 1;
-non_lin = 0;
-l_est_amb_lin = estimate_lighting(n_ref, alb_ref2, im,4,talk,is_ambient,non_lin);
+non_lin = 2;
+l_est_amb_lin = estimate_lighting(n_ref, alb_ref2*0+1, im,4,talk,is_ambient,non_lin);
 x = l_est_amb_lin(2);   y = l_est_amb_lin(3);   z = -l_est_amb_lin(4);
 A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
 
@@ -251,7 +251,7 @@ A_est_amb_lin = atan2d(x,z);    E_est_amb_lin = atan2d(y,z);
 %% Optimization
 %     im(isnan(im)) = 0;
 if combined
-    [depth,alb,is_face] = estimate_depth_alb_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_amb_lin,...
+    [depth,alb,is_face] = estimate_depth_alb_nonlin(alb_ref2*255,im*255,dmap_ref2,l_est_amb_lin,...
         lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,is_alb_dz,z_gt,algo);
     %         alb = alb*255;
     figure;imshow(alb/255);
@@ -290,7 +290,7 @@ elseif is_alb_opt
         D = D(:,:,2);
     end
     lambda_reg2 = 0.3;
-    is_dz_depth = 1;
+    is_dz_depth = 0.2;
     lambda_dz = 1;
     lambda1 = 80;
     % eye_mask(:) = 1;
@@ -299,17 +299,17 @@ elseif is_alb_opt
     % l_est_amb_lin = l_synth;
     rng(1);
     [depth,alb,is_face] = estimate_depth_nonlin(alb_ref2*255,D*255,...
-        dmap_ref,l_est_amb_lin,...
+        dmap_ref2,l_est_amb_lin,...
         lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,...
         is_dz_depth,lambda_dz,lambda_reg2,[],algo,1);
-    offset = mean(depth(is_face)) - mean(dmap_ref(is_face));
+    offset = mean(depth(is_face)) - mean(dmap_ref2(is_face));
     depth = depth-offset;
     figure;surf(depth);axis equal
     figure;imshow(alb,[]);
     alb_render = alb/255;
     title('estimated albedo')
 else
-    depth = estimate_depth_nonlin(alb_ref2*255,im*255,dmap_ref,l_est_amb_lin,...
+    depth = estimate_depth_nonlin(alb_ref2*255,im*255,dmap_ref2,l_est_amb_lin,...
         lambda1,lambda2,lambda_bound,max_iter,boundary_type,jack,eye_mask,z_gt,algo,0);
     alb = im_c*255;
     alb_render = alb_ref2*0+1;
@@ -321,7 +321,7 @@ figure;
 im_c(im_c<0) = 0;
 im_inp_c = im_c;
     im_inp_c = xyz2rgb(lin_xyz);
-depth_s=surf(depth,im_inp_c,'edgealpha',0,'facecolor','interp');axis equal
+depth_s=surf(dmap_ref2,im_inp_c,'edgealpha',0,'facecolor','interp');axis equal
 colormap 'gray';
 phong.shading(depth_s);
 title('Estimated Depth')
@@ -360,7 +360,7 @@ im_rendered = render_model_noGL(n_new,l_est_amb_lin,alb_ref,0);
 
 
 
-[z_o,alb_o,L_sh_o]=intrinsic_decomposition(inp_im_c,depth,labels,(~isnan(dmap_ref).*eye_mask)>0,...
+[z_o,alb_o,L_sh_o]=intrinsic_decomposition(inp_im_c,depth,labels,(~isnan(dmap_ref2).*eye_mask)>0,...
     scalez*1000);
 
 alb_o(alb_o<0)=0;
