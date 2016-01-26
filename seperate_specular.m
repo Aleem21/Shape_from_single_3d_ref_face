@@ -1,6 +1,12 @@
 function [ D,S,chrom_light ] = seperate_specular( im,mask,labels )
 %SEPERATE_SPECULAR Summary of this function goes here
 %   Detailed explanation goes here
+RGB_to_XYZ = [  0.4124564 0.3575761 0.1804375;
+    0.2126729 0.7151522 0.0721750;
+    0.0193339 0.1191920 0.9503041];
+XYZ_to_RGB = inv(RGB_to_XYZ);
+
+
 mask(isnan(im(:,:,1))) = 0;
 mask3 = repmat(mask,1,1,3);
 % clrs = im(mask3);
@@ -11,6 +17,9 @@ mask3 = repmat(mask,1,1,3);
 % figure;plot(clrs2*pln);
 
 im_g = rgb2gray(im);
+lin_xyz = correct(im,RGB_to_XYZ);
+
+im_g = lin_xyz(:,:,2);
 intensity = im_g(mask);
 strt = min(intensity);
 span = range(intensity);
