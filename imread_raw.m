@@ -11,10 +11,12 @@ RGB_to_XYZ = [  0.4124564 0.3575761 0.1804375;
 XYZ_to_cam = [   6847,-614, -1014;
                 -4669, 12737,2139;
                 -1197, 2488, 6846]/10000;
-system (['dcraw-9.26-ms-64-bit -4 -T -W -w -q 3 -o 5 ' impath]);
+system(['dcraw-9.26-ms-64-bit -4 -T -W -w -q 3 -o 5 ' impath]);
+% system (['dcraw-9.26-ms-64-bit -T -W -w -q 3 -h -o 1 ' impath]);
 tiff_path = [impath(1:end-3) 'tiff'];
 lin_XYZ = im2double(imread(tiff_path));
-
+% lin_gray = lin_XYZ(:,:,1);
+% lin_rgb = lin_XYZ;
 % lin_gray = rgb2gray(xyz2rgb(lin_XYZ));
 lin_gray = lin_XYZ(:,:,2);
 XYZ_to_RGB = inv(RGB_to_XYZ);
@@ -32,7 +34,7 @@ try
     XYZ_to_cam = reshape(meta_info.ColorMatrix2,3,3);
     XYZ_to_cam = XYZ_to_cam';
 catch
-    [~,header] = system (['dcraw-9.26-ms-64-bit -v -W -T ' impath]);
+    [~,header] = system (['dcraw-9.26-ms-64-bit -v -W -T -h ' impath]);
     d_i = strfind(header,'darkness ');
     d_end =  strfind(header(d_i+9:end),',');
     black = str2double(header(d_i+8 +(1:d_end(1)-1)));
@@ -47,13 +49,16 @@ catch
     
     
 end
+
+% mask_order = 'gbrg';
+mask_order = 'rggb';
 lin_bayer = (raw-black)/(saturation-black);
 lin_bayer = max(0,min(lin_bayer,1));
-mask = wbmask(size(lin_bayer,1),size(lin_bayer,2),wb_multipliers,'gbrg');
+mask = wbmask(size(lin_bayer,1),size(lin_bayer,2),wb_multipliers,mask_order);
 balanced_bayer  = lin_bayer.*mask;
 
 temp = uint16(balanced_bayer/max(balanced_bayer(:))*2^16);
-lin_cam = double(demosaic(temp,'gbrg'))/2^16;
+lin_cam = double(demosaic(temp,mask_order))/2^16;
 
 
 RGB_to_cam = XYZ_to_cam*RGB_to_XYZ;
@@ -64,7 +69,6 @@ lin_rgb = correct(lin_cam,cam_to_RGB);
 cam_to_XYZ = inv(XYZ_to_cam);
 lin_XYZ = correct(lin_cam,cam_to_XYZ);
 lin_gray = lin_XYZ(:,:,2);
-
 
 end
 function colormask = wbmask(m,n,wbmults,align)

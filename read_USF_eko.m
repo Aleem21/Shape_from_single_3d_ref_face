@@ -1,5 +1,8 @@
-function [ pts,tri,rgb,x,y,z,spherical,im_mean,eyes_rgb ] = read_USF_eko( echo_path,r,c,black_eyes,talk )
+function [ pts,tri,rgb,x,y,z,spherical,im_mean,eyes_rgb ] = read_USF_eko( echo_path,r,c,black_eyes,talk,is_full )
 %READ_USF_EKO path can be an echo file path or a whole directory for batch
+if nargin<6
+    is_full = 0;
+end
 if nargin<5
     talk = 0;
 end
@@ -77,6 +80,9 @@ end
 %% clip to valid region only
 valid_region = im2double(imread('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\range2.bmp'));
 valid_region(valid_region==0) = NaN;
+if is_full
+    valid_region(:) = 1;
+end
 im_mean = im2double(im_mean).*repmat(double(valid_region(end:-1:1,:)),1,1,3);
 
 %% plot results

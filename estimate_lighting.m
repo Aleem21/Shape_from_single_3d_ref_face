@@ -67,7 +67,7 @@ alb = alb(:);
 im = im(~isnan(nx) & eye_mask_v & ~isnan(alb'))';
 alb = alb(~isnan(nx) & eye_mask_v & ~isnan(alb'))';
 
-bad = im<0.01 | im>0.9 | alb< 0.01;
+bad = im<10 | im>240 | alb< 10;
 % bad = [];
 im(bad) = [];
 alb(bad) = [];

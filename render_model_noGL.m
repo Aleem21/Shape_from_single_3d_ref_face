@@ -1,6 +1,6 @@
 function [ im ] = render_model_noGL( n, sh_coeff, alb,talk )
-%RENDER_MODEL Summary of this function goes here
-%   Detailed explanation goes here
+%RENDER_MODEL 
+% [ im ] = render_model_noGL( n, sh_coeff, alb,talk )
 if nargin<4
     talk = 0;
 end

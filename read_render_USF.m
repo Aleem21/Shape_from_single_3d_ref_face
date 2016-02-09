@@ -1,10 +1,13 @@
-function [ rendered,rendered_c,z,scales ] = read_render_USF( impath,Rpose,sz )
+function [ rendered,rendered_c,z,scales ] = read_render_USF( impath,Rpose,sz,is_full)
 %READ_RENDER_USF Summary of this function goes here
 %   Detailed explanation goes here
 if nargin <3
     sz = [300 300];
 end
-[pts,tri,rgb] = read_USF_eko(impath,512,512);
+if nargin<4
+    is_full = 0;
+end
+[pts,tri,rgb] = read_USF_eko(impath,512,512,0,0,is_full);
 pts_rotated = Rpose*[pts; ones(1,size(pts,2))];
 pts_rotated = pts_rotated(1:3,:);
 

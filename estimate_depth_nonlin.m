@@ -1,6 +1,6 @@
-function [ depth,alb_out,in_face ] = estimate_depth_nonlin...
+function [ depth,alb_out,in_face,l_sh] = estimate_depth_nonlin...
     ( alb_ref, im, z_ref, sh_coeff,lambda1,lambda2,lambda_bound,max_iter,bound_type,...
-    jack,eye_mask,is_dz_depth,lambda_dz,lambda_reg2,z_gnd,algo,talk)
+    jack,eye_mask,is_dz_depth,is_l_sh,lambda_dz,lambda_reg2,z_gnd,algo,talk)
 %ESTIMATE_DEPTH Summary of this function goes here
 %   Detailed explanation goes here
 if nargin <15
@@ -18,20 +18,19 @@ else
     end
 end
 %% Prepocessing
-
 [ face,face_inds, inface_inds,in_face] = preprocess_estimate_depth( z_ref );
 
 %% Optimization - depth
-[ costfun_z, is_face,nData,nBound,nReg,jacobianPattern_z ]...
+[ costfun_z, is_face,nData,nBound,nReg]...
     = get_depth_costfun( z_ref, im, alb_ref, sh_coeff,eye_mask, lambda1,...
-    lambda_bound,bound_type,is_dz_depth,lambda_dz,lambda_reg2);
+    lambda_bound,bound_type,is_dz_depth,is_l_sh,lambda_dz,lambda_reg2);
 
-init_z = z_ref(is_face);
+init_z = [z_ref(is_face); sh_coeff(1:4)];
 % options = optimset('Display','iter-detailed','maxIter',100,'JacobPattern',jacobianPattern);
 % options = optimset('Display','iter-detailed','maxIter',200,...
 %     'Jacobian','on','JacobMult',@jacobMultFnc,'JacobPattern',jacobianPattern);
 options = optimset('Display','iter-detailed','maxIter',max_iter,...
-    'Jacobian',jack,'JacobPattern',jacobianPattern_z,'Algorithm',algo,'maxFunEvals',Inf); 
+    'Jacobian',jack,'Algorithm',algo,'maxFunEvals',Inf); 
 
 % options = optimset('Display','iter-detailed','maxIter',max_iter,...
 %     'JacobPattern',jacobianPattern); %,'Algorithm','levenberg-marquardt'
@@ -42,6 +41,8 @@ z=lsqnonlin(costfun_z,init_z,[],[],options);
 % options = optimset('Display','iter-detailed','maxIter',max_iter,...
 %     'Jacobian','off','Algorithm',algo,'maxFunEvals',Inf); %
 % z2=lsqnonlin(costfun_z,z,[],[],options);
+l_sh = z(end-3:end);
+z = z(1:end-4);
 %% Post precessing
 depth = NaN(size(alb_ref));
 depth(face_inds) = z;
@@ -65,7 +66,7 @@ depth(~in_face)=nan;
 %% showing output
 if talk
     cost_ref = costfun_z(init_z).^2;
-    cost_est = costfun_z(z).^2;
+    cost_est = costfun_z([z(:); l_sh(:)]).^2;
     if is_gnd
         z_gndd = z_gnd(is_face);
         cost_gt= costfun_z(z_gndd).^2;

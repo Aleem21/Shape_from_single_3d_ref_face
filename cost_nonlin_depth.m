@@ -1,7 +1,9 @@
-function [ cost, jacobian] = cost_nonlin_depth( z,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,lambda_dz,lambda_reg2,l,rho,z_ref,gaussVec,type,is_dz_depth,eye_mask,i_bound,val_bound,is_face)
+function [ cost, jacobian] = cost_nonlin_depth( z_l,i_p,i_q,i_bx,i_by,ncx,ncy,iz_reg,im,rhs_reg,lambda_dz,lambda_reg2,l,rho,z_ref,gaussVec,type,is_dz_depth,is_l_sh,eye_mask,i_bound,val_bound,is_face,face)
 %DEPTH_COST_NONLIL Summary of this function goes here
 %   Detailed explanation goes here
 %% data cost
+z = z_l(1:end-4);
+l = z_l(end-3:end);
 p = z(i_p(:,1))-z(i_p(:,2));
 q = z(i_q(:,1))-z(i_q(:,2));
 dark_factor = eye_mask;
@@ -9,10 +11,10 @@ cost_data = (rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4))-im).
 
 synth = fill_var(rho*l(1) + rho./(p.^2+q.^2+1).^0.5 .* (l(2)*p + l(3)*q - l(4)),is_face,0);
 im2 = fill_var(im,is_face,0);
-z_synth = fill_var(z,is_face,nan);
-p_synth = fill_var(p,is_face,0);
-q_synth = fill_var(q,is_face,0);
-
+z_synth = fill_var(z_l(i_p(:,1)),is_face,nan);
+% p_synth = fill_var(p,is_face,0);
+% q_synth = fill_var(q,is_face,0);
+ 
 
 
 %% boundary conditions
@@ -23,6 +25,7 @@ else
 end
 %% regularization cost
 cost_reg = sum(z(iz_reg).*repmat(gaussVec',size(iz_reg,1),1),2)-rhs_reg;
+cost_reg_im = fill_var(cost_reg,is_face,0);
 if is_dz_depth
     cost_reg_dz = (z(iz_reg(:,5))-z_ref)*lambda_dz;
 else
@@ -34,11 +37,13 @@ cost_reg2 = sum(  z(iz_reg).*repmat(lap_op(:)',size(iz_reg,1),1)  ,2  );
 % cost = sum(sum(cost_data.^2) + sum(cost_bound.^2) + sum(cost_reg.^2));
 cost = [cost_data; cost_bound; cost_reg; cost_reg_dz; cost_reg2];
 
+reg_synth = fill_var(cost_reg,is_face,0);
+data_synth = fill_var(cost_data,is_face,0);
 
 %% jacobian
 if nargout >1
     nR = numel(cost);
-    nC = numel(z);
+    nC = numel(z)+4;
     d2 = (p.^2+q.^2+1);
     n = l(2)*p + l(3)*q - l(4);
     % data term
@@ -92,6 +97,14 @@ if nargout >1
     constNumber5 = repmat(1:size(iz_reg,1),9,1)' + offset4;
     reg_rhs_2 = repmat(lap_op(:)',size(iz_reg,1),1);
     
+    
+    %spherical harmonic lighting
+    constNumber6 = repmat(1:size(i_p,1),4,1);
+    col6 = repmat((1:4)',1,size(i_p,1))+numel(z);
+    sh_rhs = [rho [p q p*0-1].*repmat(rho./sqrt(d2),1,3)]';
+    if ~is_l_sh
+        sh_rhs = sh_rhs*0;
+    end
     if type==1
         jacobian = sparse([constNumber1(:); constNumber2(:); constNumber3(:); constNumber4(:)]...
         ,[i_p(:); i_q(:);i_bx(:);i_by(:);iz_reg(:);col4(:)]...
@@ -99,9 +112,9 @@ if nargout >1
         nR,nC);
     else
     jacobian = sparse([constNumber1(:); constNumber2(:); constNumber3(:);...
-        constNumber4(:); constNumber5(:)]...
-        ,[i_p(:); i_q(:);i_bnd;i_by(:);iz_reg(:);col4(:);iz_reg(:)]...
-        ,[data_rhs(:); bnd_rhs(:); reg_rhs(:); rhs_reg_dz(:); reg_rhs_2(:)],...
+        constNumber4(:); constNumber5(:);constNumber6(:)]...
+        ,[i_p(:); i_q(:);i_bnd;i_by(:);iz_reg(:);col4(:);iz_reg(:);col6(:)]...
+        ,[data_rhs(:); bnd_rhs(:); reg_rhs(:); rhs_reg_dz(:); reg_rhs_2(:);sh_rhs(:)],...
         nR,nC);
     end
 end

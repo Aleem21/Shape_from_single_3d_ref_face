@@ -9,7 +9,7 @@ end
 [pts,tri,rgb] = read_USF_eko('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test',512,512);
 
 [rendered,z] = render_rgb_USF(pts,tri,rgb,rRes,cRes);
-z = double(z)*min(rRes,cRes)/2;
+z = double(z)*(min(rRes,cRes)-1)/2;
 landmarks_ref = stasm_tracker(rendered,talk);
 valid = 17:77;
 landmarks_3D_ref = px_to_3d_USF(landmarks_ref(:,valid),z,cRes,rRes);
