@@ -72,3 +72,8 @@ stasm4/
 *.mat
 *.png
 *.tiff
+*.jpg
+*.txt
+*.dll
+*.cc
+
