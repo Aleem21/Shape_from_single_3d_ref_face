@@ -76,7 +76,7 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         drawnow
         frame = getframe();
         writeVideo(writerObj,frame);
-        frames{end+1} = frame.cdata ;
+        frames{end+1} = real(im2double(frame.cdata).^(1/2.2)) ;
     end
     q1 = q2;
     q2 = quaternion.angle2quat(0,-pi/4*span,pi/4*span);
@@ -96,7 +96,7 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         drawnow
         frame = getframe();
         writeVideo(writerObj,frame);
-        frames{end+1} = frame.cdata ;
+        frames{end+1} = real(im2double(frame.cdata).^(1/2.2)) ;
     end
     q1 = q2;
     q2 = quaternion.angle2quat(0,-pi/4*span,-pi/4*span);
@@ -116,7 +116,7 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         drawnow
         frame = getframe();
         writeVideo(writerObj,frame);
-        frames{end+1} = frame.cdata ;
+        frames{end+1} = real(im2double(frame.cdata).^(1/2.2)) ;
     end
     q1 = q2;
     q2 = quaternion.angle2quat(0,pi/4*span,-pi/4*span);
@@ -137,7 +137,7 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         drawnow
         frame = getframe();
         writeVideo(writerObj,frame);
-        frames{end+1} = frame.cdata ;
+        frames{end+1} = real(im2double(frame.cdata).^(1/2.2)) ;
     end
     q1 = q2;
     q2 = quaternion.angle2quat(0,pi/4*span,0);
@@ -157,7 +157,7 @@ function do_relighting( im1,l1,n,frameRate,speed,span )
         drawnow
         frame = getframe();
         writeVideo(writerObj,frame);
-        frames{end+1} = frame.cdata ;
+        frames{end+1} = real(im2double(frame.cdata).^(1/2.2)) ;
     end
     close(writerObj);
     vid_helper.make_gif(frames,'relighting.gif');

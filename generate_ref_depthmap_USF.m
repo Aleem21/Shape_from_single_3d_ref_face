@@ -1,4 +1,4 @@
-function [ depth_map, n, N_ref,albedo, eye_map,scalez,pts ] = generate_ref_depthmap_USF( Scale, Rpose, im,im_c, dataset_path,use_model,talk )
+function [ depth_map, n, N_ref,albedo, eye_map,scalez,pts,model ] = generate_ref_depthmap_USF( Scale, Rpose, im,im_c, dataset_path,use_model,talk )
 
 %GENERATE_REF_DEPTHMAP generated depthmap from reading the ply file of the
 %model, resolution of rows and columns specified by inputs
@@ -23,7 +23,7 @@ RGB_to_XYZ = [  0.4124564 0.3575761 0.1804375;
 XYZ_to_RGB = inv(RGB_to_XYZ);
 import plot3D_helper.plot_pointcloud
 import plot3D_helper.label_axis
-import plyread.plyread
+import plyhelper.plyread
 if nargin<4
     use_model = 0;
 end
@@ -37,7 +37,8 @@ yrange = [1 size(im,1)];
 
 %% Generate reference pointcloud and texture map (albedo)
 black_eyes = 1;
-[pts,tri,rgb,~,~,~,~,~,eye_rgb] = read_USF_eko(dataset_path,512,512,black_eyes,talk);
+is_full = 0;
+[pts,tri,rgb,~,~,~,~,~,eye_rgb] = read_USF_eko(dataset_path,512,512,black_eyes,talk,is_full);
 %% data conditioning
 
 %pose correction
@@ -50,32 +51,35 @@ pts_rotated = pts_rotated([1 2 3],:);
 %% generate depth map by calling mex file
 if use_model
     [FV,b,R,t,s] = fit_model(im_c,1);
-    x2 = R*FV.vertices(:,:)';
-    x2(1,:) = x2(1,:)+t(1);
-    x2(2,:)=x2(2,:)+t(2);
-    x2 = x2*s;
+    model.FV = FV; model.b = b; model.R = R; model.t = t; model.s = s;
+    % get depth
+    [pts_rotated,tri,clr] = model2GL(model,mean(xrange));
+    model.clr = clr;
+    [depth_map,~] = computer_depth_USF( pts_rotated,tri,clr,xrange,yrange,im_c,talk );
+    % fill in the gap between lips
+    steps = abs(conv2(depth_map,[-1 1]','same'))>45;
+    steps([1 end],:) = 0;
+    steps(:,[1 end]) = 0;
+    [r,c] = find(steps);
+    for i = 1:numel(r)
+        depth_map(r(i),c(i)) = median(depth_map(sub2ind(size(depth_map),r(i)+[-1 0 1],c(i)+[0 0 0])));
+    end
     
-    pts_rotated = double(x2);
-    pts_rotated(1,:) = -(pts_rotated(1,:) - mean(xrange)) + mean(xrange);
-    pts_rotated(3,:) = -(pts_rotated(3,:) - max(pts_rotated(3,:)));
-    
-    tri = FV.faces'-1;
-    load('mask')
-    clr = double(repmat(mask',3,1)==0);
-    [depth_map,albedo] = computer_depth_USF( pts_rotated,tri,clr,xrange,yrange,im_c,talk );
-    depth_map(albedo(:,:,1)<1) = nan;
-    albedo(albedo<1) = nan;
-	load('./Basel Face Model/01_MorphableModel.mat');
+    %get albedo
+    load('./Basel Face Model/01_MorphableModel.mat');
     clr = double(reshape(texMU,3,[]))/255;
 	[~,albedo] = computer_depth_USF( pts_rotated,tri,clr,xrange,yrange,im_c,talk );
-
+    
 else
     [depth_map,albedo] = computer_depth_USF( pts_rotated,tri,rgb,xrange,yrange,im_c,talk );
 end
 scalez = 1/9*1/min(Scale);
 % albedo = correct(albedo,RGB_to_XYZ);
 % albedo = double(albedo(:,:,2));
+% albedo = correct(albedo,RGB_to_XYZ);
+% albedo = xyz2rgb(albedo);
         albedo = double(rgb2gray(albedo));
+% albedo = double(albedo(:,:,2));
 albedo = albedo/max(albedo(:));
 %% generate eyemap
 if use_model

@@ -1,7 +1,7 @@
 function [ c ] = render_model_general( ply_path, sh_coeff,Rpose, rRes, cRes, xrange, yrange, talk )
 %RENDER_MODEL Assumes the input sh_coeff are actually pre-multiplied with
 %an's and ci's such that R = dot(sh_coeff, [1,nx,ny,nz,...]')
-import plyread.plyread
+import plyhelper.plyread
 
 if nargin < 8
     talk = 0;

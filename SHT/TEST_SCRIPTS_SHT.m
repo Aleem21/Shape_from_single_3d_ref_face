@@ -41,7 +41,7 @@
 aziElev2aziIncl = @(dirs) [dirs(:,1) pi/2-dirs(:,2)];
 % Construct a band-limited spherical function for testing the SHT (4-th
 % order cardioid function)
-Nord = 6;
+Nord = 3;
 fcosAlpha = @(azi, polar, azi0, polar0) cos(polar)*cos(polar0) + ...
     sin(polar)*sin(polar0).*cos(azi-azi0);  % function for dipole oriented at azi0, polar0
 % orientation of mainlobe
@@ -59,7 +59,7 @@ figure
 plotSphFunctionGrid(Fdirs2grid(F,5,5,1), 5,5,'real',gca);
 
 % construct different sampling grids for the SHT of order 4
-regular_grid = grid2dirs(30,30);
+regular_grid = grid2dirs(15,15);
 Kreg = size(regular_grid,1); % regular grid with 62 points
 
 [~, tdesign_grid] = getTdesign(2*Nord);
@@ -96,9 +96,9 @@ subplot(133), plot(0:Nord+1, [cond_N_fliege cond_N_fliege_weighted]), title('Mai
 %% PERFORM SHT
 
 % sample function on the respective grids
-F_reg = fcardioid(regular_grid(:,1), regular_grid(:,2));
-F_tdes = fcardioid(tdesign_grid(:,1), tdesign_grid(:,2));
-F_fliege = fcardioid(fliege_grid(:,1), fliege_grid(:,2));
+F_reg = fcardioid(regular_grid(:,1), regular_grid(:,2))*0+1;
+F_tdes = fcardioid(tdesign_grid(:,1), tdesign_grid(:,2))*0+1;
+F_fliege = fcardioid(fliege_grid(:,1), fliege_grid(:,2))*0+1;
 
 F_reg = max(cos(regular_grid(:,2)),0);
 F_tdes = max(cos(tdesign_grid(:,2)),0);

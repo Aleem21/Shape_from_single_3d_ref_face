@@ -1,6 +1,9 @@
-function [ labels ] = mark_regions( lm,im )
+function [ labels ] = mark_regions( lm,im,expanded )
 %MARK_REGIONS Summary of this function goes here
 %   Detailed explanation goes here
+if nargin<3
+    expanded = 0;
+end
 chin = csapi(lm(1,2:12),lm(2,2:12));
 
 l_eye_top = csapi(lm(1,31:35),lm(2,31:35));
@@ -48,7 +51,7 @@ polyy = [lm(2,1)...
     lm(2,13)...
     ppval(chin,linspace(lm(1,12),lm(1,2),70))
     ];
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 7;
 %region 10
 polyx = [linspace(lm(1,4),lm(1,10),50)...
@@ -57,7 +60,7 @@ polyx = [linspace(lm(1,4),lm(1,10),50)...
 polyy = [ppval(beard,linspace(lm(1,4),lm(1,10),50))...
     ppval(chin,linspace(lm(1,10),lm(1,4),50))...
     ];
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 10;
 % region 1
 polyx = [lm(1,60):0.5:lm(1,66)...
@@ -70,7 +73,7 @@ polyy = [ppval(lip_top,lm(1,60):0.5:lm(1,66))...
     linspace(lm(2,55),lm(2,56),20)...
     ppval(nose_bot,linspace(lm(1,56),lm(1,58),30))...
     linspace(lm(2,58),lm(2,59),20)];
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 1;
 % region 8
 polyx = [linspace(lm(1,60),lm(1,66),40)...
@@ -79,7 +82,7 @@ polyx = [linspace(lm(1,60),lm(1,66),40)...
 polyy = [ppval(lip_top,linspace(lm(1,60),lm(1,66),40))...
     ppval(lip_bot,linspace(lm(1,66),lm(1,60),40))...
     ];
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 8;
 % region 9
 polyx = [linspace(lm(1,76),lm(1,74),10)...
@@ -92,7 +95,7 @@ polyy = [ppval(lip_bot,linspace(lm(1,76),lm(1,74),10))...
     ppval(chin,linspace(lm(1,8),lm(1,6),10))...
     lm(2,76)
     ];
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 9;
 
 %region 6
@@ -106,7 +109,7 @@ polyy = [lm(2,23) lm(2,49) linspace(lm(2,49),lm(2,56),30)...
     linspace(lm(2,58),lm(2,49),30)...
     lm(2,22)
     ];
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 6;
 
 % region 3
@@ -114,14 +117,24 @@ polyx = [linspace(lm(1,26),lm(1,23),30)...
     linspace(lm(1,23),lm(1,26),30)];
 polyy = [ppval(r_eyeb_top,linspace(lm(1,26),lm(1,23),30))...
     ppval(r_eyeb_bot,linspace(lm(1,23),lm(1,26),30)) ];
+if expanded
+    mx = mean(polyx); my = mean(polyy);
+    polyx = (polyx-mx)*1.5 + mx;
+    polyy = (polyy-my)*1.5 + my;
+end
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 3;
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 polyx = [linspace(lm(1,19),lm(1,22),30)...
     linspace(lm(1,22),lm(1,19),30)];
 polyy = [ppval(l_eyeb_top,linspace(lm(1,19),lm(1,22),30))...
     ppval(l_eyeb_bot,linspace(lm(1,22),lm(1,19),30)) ];
+if expanded
+    mx = mean(polyx); my = mean(polyy);
+    polyx = (polyx-mx)*1.5 + mx;
+    polyy = (polyy-my)*1.5 + my;
+end
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 3;
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 %region 4
 polyx = [linspace(lm(1,23),lm(1,26),30)...
     linspace(lm(1,45),lm(1,41),30)...
@@ -130,7 +143,7 @@ polyy = [ppval(r_eyeb_bot,linspace(lm(1,23),lm(1,26),30))...
     ppval(r_eye_top,linspace(lm(1,45),lm(1,41),30))...
     ];
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 4;
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 polyx = [linspace(lm(1,22),lm(1,19),30)...
     linspace(lm(1,35),lm(1,31),30)...
     ];
@@ -138,6 +151,6 @@ polyy = [ppval(l_eyeb_bot,linspace(lm(1,22),lm(1,19),30))...
     ppval(l_eye_top,linspace(lm(1,35),lm(1,31),30))...
     ];
 labels(poly2mask(polyx,polyy,size(labels,1),size(labels,2))) = 4;
-plot([polyx polyx(1)],[polyy polyy(1)]);
+%plot([polyx polyx(1)],[polyy polyy(1)]);
 end
 

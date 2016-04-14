@@ -1,14 +1,21 @@
 function do_relighting_linear( im1,l1,n,frameRate,speed,span )
 %DO_RELIGHTING Summary of this function goes here
 %   Detailed explanation goes here
+a0 = pi;
+a1 = 2*pi/3;
+a2= 2*pi/8;
 
-    a0 = pi;
-    a1 = 2*pi/sqrt(3);
-    a2= 2*pi/sqrt(8);
-    
-    c0 =    sqrt(1  /(4*pi));
-    c1 =    sqrt(3  /(4*pi));
-    c2 = 3* sqrt(5  /(12*pi));
+c0 =    sqrt(1  /(4*pi));
+c1 =    sqrt(3  /(4*pi));
+c2 = 3* sqrt(5  /(12*pi));
+
+%     a0 = pi;
+%     a1 = 2*pi/sqrt(3);
+%     a2= 2*pi/sqrt(8);
+%     
+%     c0 =    sqrt(1  /(4*pi));
+%     c1 =    sqrt(3  /(4*pi));
+%     c2 = 3* sqrt(5  /(12*pi));
     
     nx = n(:,:,1);
     nx = nx(:)';        %change to row vector

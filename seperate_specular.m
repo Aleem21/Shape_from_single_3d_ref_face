@@ -75,9 +75,10 @@ end
 
 mean_dif_chrom = mean(mean_dif_chrom)';
 costfn = @(chr)costfn_plankian(chr,N);
-chrom_init = rand(3,1);
+chrom_init = [1 1 1]';
 chrom_light = fminunc(costfn,chrom_init);
 chrom_light = [1;1;1];
+% chrom_light = rgb2xyz([1 1 1])';
 chrom_light = chrom_light/norm(chrom_light);
 
 alb_r = mean_dif_chrom_r./repmat(chrom_light,1,10);

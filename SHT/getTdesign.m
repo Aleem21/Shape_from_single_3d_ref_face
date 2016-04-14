@@ -37,3 +37,7 @@ vecs = t_designs{degree};
 [dirs(:,1), dirs(:,2)] = cart2sph(vecs(:,1), vecs(:,2), vecs(:,3));
 
 end
+
+
+
+

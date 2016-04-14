@@ -1,8 +1,11 @@
-function [ o1_out,o2_out,o3_out,uv ] = compute_flow( im2,im1,landmarks,o1,o2,o3,n_levels,n_iters,morph,talk )
+function [ o1_out,o2_out,o3_out,uv ] = compute_flow( im2,im1,landmarks,o1,o2,o3,n_levels,n_iters,morph,talk,yale_landmarks )
 %COMPUTE_FLOW Summary of this function goes here
 %   Detailed explanation goes here
-if nargin<6
+if nargin<10
     talk = 0;
+end
+if nargin<11
+    yale_landmarks = [];
 end
 
 
@@ -10,35 +13,117 @@ im1(isnan(im1)) = 0;
 im2(isnan(im2)) = 0;
 
 if morph
+    addpath('./interparc/')
     eye_l = 31:38;
     eye_r = 41:48;
 
     eyes_up_i = [29 30]-16;
     eyes_center_i = [39 40]-16;
+    eye_b_l = 17:22;
+    eye_b_r = 23:28;
+    
     valid = 17:77;
     valid([eyes_center_i eyes_up_i]) = [];
-    
+    valid(ismember(valid,eye_l) | ismember(valid,eye_r)) = [];
+    valid(ismember(valid,eye_b_l) | ismember(valid,eye_b_r)) = [];
+    l_u = valid(12:21);
+    l_l = valid([12 22:24 18 25:29]);
+    valid(ismember(valid,l_u) | ismember(valid,l_l)) = [];
+
     eye_l(end)=[]; eye_r(end)=[];
-    landmarks_ref = stasm_tracker(im1,4);
-    p = [landmarks_ref(:,valid)...
-        mean(landmarks_ref(:,eye_l),2) mean(landmarks_ref(:,eye_r),2)];
-    q = [landmarks(:,valid)...
-        mean(landmarks(:,eye_l),2) mean(landmarks(:,eye_r),2)];
-    step = 1;
-    [X,Y] = meshgrid(1:step:size(im1,2),1:step:size(im1,1));
-    gv = [X(:)';Y(:)'];
-    cd 'MLS'
-    mlsd = MLSD2DpointsPrecompute(p,gv);
-    imgo = MLSD2DWarp(im1,mlsd,q,X,Y);
-    %     figure; imshow(im1);
-    %     figure; imshow(im2);
-    %     figure; imshow(imgo);
-    o1 = MLSD2DWarp(o1,mlsd,q,X,Y);
-    o2 = MLSD2DWarp(o2,mlsd,q,X,Y);
-    o3 = MLSD2DWarp(o3,mlsd,q,X,Y);
+    if ~isempty(yale_landmarks)
+        landmarks_ref = yale_landmarks;
+    else
+        landmarks_ref = stasm_tracker(imresize(im1,2),4);
+        landmarks_ref = floor(landmarks_ref/2);
+    end
+    %% eye brows
+    if numel(landmarks_ref)>0
+        p_eye_b_l_pt = landmarks_ref(:,eye_b_l([6 1 2 3]))/2 + landmarks_ref(:,eye_b_l([6 5 4 3]))/2;
+        p_eye_b_r_pt = landmarks_ref(:,eye_b_r([1 2 3 4]))/2 + landmarks_ref(:,eye_b_r([1 6 5 4]))/2;
+        p_eye_b_l_pt = interparc([0:0.01:1],p_eye_b_l_pt(1,:),p_eye_b_l_pt(2,:))';
+        p_eye_b_r_pt = interparc([0:0.01:1],p_eye_b_r_pt(1,:),p_eye_b_r_pt(2,:))';
+
+        q_eye_b_l_pt = landmarks(:,eye_b_l([6 1 2 3]))/2 + landmarks(:,eye_b_l([6 5 4 3]))/2;
+        q_eye_b_r_pt = landmarks(:,eye_b_r([1 2 3 4]))/2 + landmarks(:,eye_b_r([1 6 5 4]))/2;
+        q_eye_b_l_pt = interparc([0:0.01:1],q_eye_b_l_pt(1,:),q_eye_b_l_pt(2,:))';
+        q_eye_b_r_pt = interparc([0:0.01:1],q_eye_b_r_pt(1,:),q_eye_b_r_pt(2,:))';
+
+        %% lips
+        p_l_u = landmarks_ref(:,l_u);
+%         sp_l_u = [interparc([0:0.02:1],p_l_u(1,[1:7]),p_l_u(2,[1:7]))'...
+%             interparc([0:0.02:1],p_l_u(1,[7:end 1]),p_l_u(2,[7:end 1]))'];
+        sp_l_u = [interparc([0:0.02:1],p_l_u(1,[1:7]),p_l_u(2,[1:7]))'...
+            ];
+
+        p_l_l = landmarks_ref(:,l_l);
+%         sp_l_l = [interparc([0:0.02:1],p_l_l(1,[1:5]),p_l_l(2,[1:5]))'...
+%             interparc([0:0.02:1],p_l_l(1,[5:end 1]),p_l_l(2,[5:end 1]))'];
+        sp_l_l = [interparc([0:0.02:1],p_l_l(1,[5:10 1]),p_l_l(2,[5:10 1]))'...
+            ];
+        p_lip = [sp_l_u sp_l_l];
+
+        q_l_u = landmarks(:,l_u);
+%         sq_l_u = [interparc([0:0.02:1],q_l_u(1,[1:7]),q_l_u(2,[1:7]))'...
+%             interparc([0:0.02:1],q_l_u(1,[7:end 1]),q_l_u(2,[7:end 1]))'];
+        sq_l_u = [interparc([0:0.02:1],q_l_u(1,[1:7]),q_l_u(2,[1:7]))'...
+            ];
+        q_l_l = landmarks(:,l_l);
+%         sq_l_l = [interparc([0:0.02:1],q_l_l(1,[1:5]),q_l_l(2,[1:5]))'...
+%             interparc([0:0.02:1],q_l_l(1,[5:end 1]),q_l_l(2,[5:end 1]))'];
+        sq_l_l = [interparc([0:0.02:1],q_l_l(1,[5:10 1]),q_l_l(2,[5:10 1]))'...
+            ];
+        q_lip = [sq_l_u sq_l_l];
+
+        %% eyes
+        p_e_l = landmarks_ref(:,eye_l);
+    %     sp_e_l = [interparc([0:0.02:1],p_e_l(1,[1:5]),p_e_l(2,[1:5]))'...
+    %         interparc([0:0.02:1],p_e_l(1,[5:end 1]),p_e_l(2,[5:end 1]))'];
+        sp_e_l = [interparc([0:0.02:1],p_e_l(1,[1:5]),p_e_l(2,[1:5]))'];
+
+        p_e_r = landmarks_ref(:,eye_r);
+    %     sp_e_r = [interparc([0:0.02:1],p_e_r(1,[1:5]),p_e_r(2,[1:5]))'...
+    %         interparc([0:0.02:1],p_e_r(1,[5:end 1]),p_e_r(2,[5:end 1]))'];
+        sp_e_r = [interparc([0:0.02:1],p_e_r(1,[1:5]),p_e_r(2,[1:5]))'];
+        p_e = [sp_e_l sp_e_r];
+
+        q_e_l = landmarks(:,eye_l);
+    %     sq_e_l = [interparc([0:0.02:1],q_e_l(1,[1:5]),q_e_l(2,[1:5]))'...
+    %         interparc([0:0.02:1],q_e_l(1,[5:end 1]),q_e_l(2,[5:end 1]))'];
+        sq_e_l = [interparc([0:0.02:1],q_e_l(1,[1:5]),q_e_l(2,[1:5]))'];
+
+        q_e_r = landmarks(:,eye_r);
+    %     sq_e_r = [interparc([0:0.02:1],q_e_r(1,[1:5]),q_e_r(2,[1:5]))'...
+    %         interparc([0:0.02:1],q_e_r(1,[5:end 1]),q_e_r(2,[5:end 1]))'];
+        sq_e_r = [interparc([0:0.02:1],q_e_r(1,[1:5]),q_e_r(2,[1:5]))'];
+
+        q_e = [sq_e_l sq_e_r];
+    %% nose 
+        p = [mean(landmarks_ref(:,valid),2)...
+            mean(landmarks_ref(:,eye_l),2) mean(landmarks_ref(:,eye_r),2)...
+            p_eye_b_l_pt p_eye_b_r_pt p_lip p_e];
+        q = [mean(landmarks(:,valid),2)...
+            mean(landmarks(:,eye_l),2) mean(landmarks(:,eye_r),2)...
+            q_eye_b_l_pt q_eye_b_r_pt q_lip q_e];
+        if norm(p(:)-q(:))<500
+            step = 1;
+            [X,Y] = meshgrid(1:step:size(im1,2),1:step:size(im1,1));
+            gv = [X(:)';Y(:)'];
+            cd 'MLS'
+            mlsd = MLSD2DpointsPrecompute(p,gv);
+            imgo = MLSD2DWarp(im1,mlsd,q,X,Y);
+            %     figure; imshow(im1);
+            %     figure; imshow(im2);
+            %     figure; imshow(imgo);
+            o1 = MLSD2DWarp(o1,mlsd,q,X,Y);
+            o2 = MLSD2DWarp(o2,mlsd,q,X,Y);
+            o3 = MLSD2DWarp(o3,mlsd,q,X,Y);
+
+            im1 = imgo;
+            cd ..
+        end
+    end
     
-    im1 = imgo;
-    cd ..
 end
 
 if n_levels>0 && n_iters>0
@@ -62,7 +147,8 @@ if n_levels>0 && n_iters>0
                 im1_cur  = interp2(im1_pyr{i}, x-uv(:,:,1), y-uv(:,:,2));
                 im1_cur(isnan(im1_cur)) = im1_pyr{i}(isnan(im1_cur));
                 
-                uv_cur = flow.mex_LDOF(repmat(im1_cur,1,1,3)*255,repmat(im2_pyr{i},1,1,3)*255);
+                uv_cur = flow.mex_LDOF(repmat(im1_cur,1,1,3)*255,repmat(im2_pyr{i},1,1,3)*255,0.8,30);
+%                 uv_cur = flow.mex_LDOF(repmat(im1_cur,1,1,3)*255,repmat(im2_pyr{i},1,1,3)*255);
                 uv = uv + uv_cur;
             end
         end

@@ -110,14 +110,14 @@ end
 
 
 % regularization term
-% in_inface = (in_face-b_in_full);
+in_inface = logical(in_face-b_in_full);
 in_inface = in_face;
 
 [r_innface,c_innface] = find(in_inface);
 % innface_inds = sub2ind(size(face),r_innface,c_innface);
 innface_inds = find(in_inface);
 
-sz = 3; dev = 2;
+sz = 3; dev = 1;
 gauss = fspecial('gaussian',sz,dev);
 rhs_reg_mat = lambda1*(z_ref - conv2(z_ref,gauss,'same'));
 
@@ -176,7 +176,7 @@ else
     costfun=@(z)cost_nonlin_depth(z,[xp xn],[yp yn],...
     [],[],...
     ncx,ncy,iz_reg,...
-    im(in_face),rhs_reg,lambda_dz,lambda_reg2,sh_coeff,rho_ref,z_ref(in_face)...
+    im(in_face),rhs_reg,lambda_dz,lambda_reg2,sh_coeff,rho_ref,z_ref(in_inface)...
     ,gaussVec,type,is_dz_depth,is_l_sh,eye_mask(in_face),i_bound,val_bound,in_face,face);
 
 end

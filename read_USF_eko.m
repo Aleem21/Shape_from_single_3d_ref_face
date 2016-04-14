@@ -22,6 +22,10 @@ else
         im_mean = imread([echo_path 'ref_albedo.bmp']);
         load([echo_path_in 'ref_depth.mat']);
     catch
+        RGB_to_XYZ = [  0.4124564 0.3575761 0.1804375;
+            0.2126729 0.7151522 0.0721750;
+            0.0193339 0.1191920 0.9503041];
+        XYZ_to_RGB = inv(RGB_to_XYZ);
         count = zeros(r,c);
         counter = 0;
         echo_paths = getAllFiles(echo_path,1);
@@ -49,6 +53,8 @@ else
             spherical_mean(valid) = (spherical_mean(valid).*count(valid)...
                 +spherical(valid))./(count(valid)+1);
             im = double(find_USF_im(echo_path_i));
+            xyz = rgb2xyz(im/255);
+            im = correct(xyz,XYZ_to_RGB)*255;
 %             im_mean = im_mean + (im-im_mean)/max(count(:));
 %             im_mean = (im_mean*counter+im)/(counter+1);
             valid3 = repmat(valid,1,1,3);
@@ -102,7 +108,7 @@ z = pts(3,:);
 %% generate triangulation and rgb
 if black_eyes
     eyes_small_rgb = double((im2double(imread('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\eyes_small_mask.bmp')))~=1);
-    eyes_small_rgb(eyes_small_rgb==0) = 0.5;
+    eyes_small_rgb(eyes_small_rgb==0) = 0.1;
     im_mean = im_mean .* eyes_small_rgb;
 end
 eyes_rgb = (im2double(imread('D:\Drives\Google Drive\Research UCSD\Ravi\Sony SFS\datasets\USF 3D Face Data\USF Raw 3D Face Data Set\data_files\test\eyes_mask.bmp')));

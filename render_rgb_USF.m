@@ -15,4 +15,3 @@ z = z(end:-1:1,end:-1:1,:)*2-1;
 z = (z*(maxz-minz))+minz;
 % z = z*min([cRes rRes])/2;
 end
-

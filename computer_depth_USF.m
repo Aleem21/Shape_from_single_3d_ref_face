@@ -4,6 +4,8 @@ function [ z,rendered ] = computer_depth_USF( pts,tri,rgb,xrange,yrange,im_c,tal
 if nargin<4
     talk = 0;
 end
+
+
 % scale xrange space of model into [-1,1]
 pts(1,:) = (pts(1,:)-xrange(1))/diff(xrange)*2-1;
 % scale yrange space of model into [-1,1]
@@ -12,9 +14,9 @@ pts(2,:) = (pts(2,:)-yrange(1))/diff(yrange)*2-1;
 minz = min(pts(3,:)); maxz = max(pts(3,:));
 pts(3,:) = (pts(3,:)-minz)/(maxz-minz)*2-1;
 
-
 rRes = yrange(2);
 cRes = xrange(2);
+
 if rRes<200
     rRes_new = 200;
 else

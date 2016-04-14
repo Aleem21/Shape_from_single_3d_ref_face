@@ -10,5 +10,6 @@ N_wt = sqrt(sum(N.^2));
 N_wt(N_wt==0)=1;
 N = N./repmat(N_wt,3,1);
 cost = (predicted_y-chrom_xy(2))^2 + sum((N'* chrom).^2.*N_wt');
+% cost = sum((N'* chrom).^2.*N_wt');
 end
 
